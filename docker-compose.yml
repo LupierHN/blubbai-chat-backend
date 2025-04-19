@@ -7,21 +7,25 @@ services:
     container_name: backend.chat.dvai
     ports:
       - "8080:8080"
-    env_file:
-      - .env
     restart: always
     depends_on:
       - db
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
   db:
     image: postgres:latest
     container_name: db.chat.dvai
     restart: always
-    environment:
-      POSTGRES_USER: dvai-main-agent
-      POSTGRES_PASSWORD: NLcep2gjJO809QL9fqnplVU3Ymuuzw9w6WCYCtQw1Sr
-      POSTGRES_DB: dvai
     volumes:
+      - /opt/chat.dvai/logs:/app/logs
+      - /opt/chat.dvai/data:/app/data
       - pgdata:/var/lib/postgresql/data
-
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=chat_dvai
 volumes:
   pgdata:
