@@ -23,10 +23,12 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                         authorizationManagerRequestMatcherRegistry
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
-                                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
-                                .requestMatchers("/api/documents/**").permitAll()
-                                .requestMatchers("/api/history/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/error").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/tools/**").permitAll()
+//                                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+//                                .requestMatchers("/api/documents/**").permitAll()
+//                                .requestMatchers("/api/history/**").permitAll()
                                 .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
