@@ -17,7 +17,7 @@ It is implemented in Java (Gradle) and uses PostgreSQL as its database. The enti
 3. [Local Start](#-local-start)
 4. [Environment Variables](#-environment-variables)
 5. [Docker Compose](#-docker-compose)
-6. [CI/CD with GitHub Actions](#-cicd-with-github-actions)
+6. [CI/CD with GitHub Actions](#cicd-with-github-actions)
 7. [Server Deployment](#-server-deployment)
 8. [Project Structure](#-project-structure)
 9. [License](#-license)
@@ -112,7 +112,7 @@ backend.chat.dvai/
 │       └── deploy.yml         # GitHub Actions workflow
 └── README.md                  # Project README
 ```
-## 📜 Lizenz
+## 📜 License
 This project is licensed under the MIT License.
 Feel free to use, modify, and distribute!
 
