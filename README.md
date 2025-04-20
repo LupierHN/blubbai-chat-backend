@@ -52,6 +52,10 @@ It is implemented in Java (Gradle) and uses PostgreSQL as its database. The enti
    ```
 ## 🚦 Local Start
  - **The backend is accessible at:** `http://localhost:8080`
+ - **Check health:**
+   ```bash
+   curl -X GET http://localhost:8080/api/health
+   ```
 
 ## 🔑 Environment Variables
 Create a `.env`file in the project root to define environment variables:
@@ -64,6 +68,8 @@ DB_PASSWORD=supersecret
 - **DB_URL**: JDBC URL for the PostgreSQL database.
 - **DB_USER**: Username for the database connection.
 - **DB_PASSWORD**: Password for the database connection.
+
+***Note**: For local development and testing you can also set these variables in your IDE or terminal session.*
 
 ## 🐳 Docker Compose
 - **Docker Compose** is included in the project and is used to start the application and its dependencies.
@@ -92,10 +98,14 @@ DB_PASSWORD=supersecret
    sudo usermod -aG docker deployuser
     ```
 2. Github Actions pushes:
-    - Files are copied to `/opt/chat.dvai` (make sure the directory exists).
-    - `docker compose down && docker compose up -d --build` is executed.
+   - Files are copied to `/opt/chat.dvai` (make sure the directory exists).
+   - `docker compose down && docker compose up -d --build` is executed.
 3. Result:
-   **The Backend is accessible at:** `http://<SERVER_IP>:8080`
+   - **The Backend is accessible at:** `http://<SERVER_IP>:8080`
+     - **Check health:**
+         ```bash
+         curl -X GET http://<SERVER_IP>:8080/api/health
+         ```
 
 ## 📂 Project Structure
 ```plaintext

@@ -7,12 +7,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.sql.DataSource;
+
 @Controller
 @AllArgsConstructor
-@RequestMapping("api/test")
-public class TestController {
+@RequestMapping("api/health")
+public class HealthController {
+    private final DataSource dataSource;
 
-    @GetMapping("/status")
+    @GetMapping()
     public ResponseEntity<String> getStatus() {
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
