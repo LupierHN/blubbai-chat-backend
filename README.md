@@ -64,6 +64,7 @@ Create a `.env`file in the project root to define environment variables:
 DB_URL=jdbc:postgresql://db:5432/chat_dvai
 DB_USER=myuser
 DB_PASSWORD=supersecret
+JWT_SECRET=mysecret #Key for JWT signing must be at least 256 bits
 ```
 - **DB_URL**: JDBC URL for the PostgreSQL database.
 - **DB_USER**: Username for the database connection.

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity(name = "account")
 @Getter
 @Setter
@@ -23,4 +25,7 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "rId", referencedColumnName = "rId")
     private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Chat> chats;
 }

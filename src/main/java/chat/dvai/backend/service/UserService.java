@@ -29,4 +29,8 @@ public class UserService {
     public User getUser(Integer uId) {
         return this.userRepository.findById(uId).orElse(null);
     }
+
+    public User getUserByUsername(String username) {
+        return this.userRepository.findByUsername(username);
+    }
 }

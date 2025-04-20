@@ -1,6 +1,5 @@
 package chat.dvai.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
@@ -9,17 +8,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+@NoArgsConstructor
+public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonProperty("rId")
-    private Integer rId;
-    private String name;
-    private String description;
+    private Integer mId;
+    private String content;
+    private int author; // 0=user, 1=ai
+    private Date sendDate;
 
+
+    @ManyToOne
+    @JoinColumn(name = "cId", referencedColumnName = "cId")
+    private Chat chat;
 }
