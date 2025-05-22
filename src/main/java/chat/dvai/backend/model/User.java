@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jboss.aerogear.security.otp.api.Base32;
 
 import java.util.List;
 
@@ -20,7 +21,8 @@ public class User {
     private String username;
     private String email;
     private String password;
-    private int phoneNumber;
+    private String secret = Base32.random();
+    private String secretMethod;
 
     @ManyToOne
     @JoinColumn(name = "rId", referencedColumnName = "rId")
@@ -28,4 +30,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Chat> chats;
+
+    @OneToOne
+    @JoinColumn(name = "pnId", referencedColumnName = "pnId")
+    private PhoneNumber phoneNumber;
 }
