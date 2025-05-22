@@ -4,6 +4,7 @@ import chat.dvai.backend.model.PhoneNumber;
 import chat.dvai.backend.model.User;
 import chat.dvai.backend.persistence.UserRepository;
 import jakarta.validation.Valid;
+import org.jboss.aerogear.security.otp.Totp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,12 @@ public class UserService {
     }
 
     public boolean verify2faCode(User user, String code) {
-        return false;
+        Totp totp = new Totp(getSecret(user));
+        return totp.verify(code);
+    }
+
+    private String getSecret(User user) {
+        return "";
     }
 
     public void send2faCode(User user, String method) {
@@ -47,7 +53,10 @@ public class UserService {
     }
 
     public String generateAuthQRCode(User user) {
-        return "";
+        String secret = getSecret(user);
+        String name = user.getUsername()+"@BlubbAI";
+        Totp totp = new Totp(secret);
+        return totp.uri(name);
     }
 
     public void updateUser(User loggedIn) {
@@ -71,5 +80,9 @@ public class UserService {
 
     public User registerUser(@Valid User user) {
         return user;
+    }
+
+    public boolean deleteUser(User user) {
+        return false;
     }
 }

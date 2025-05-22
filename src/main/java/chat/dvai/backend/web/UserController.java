@@ -125,6 +125,20 @@ public class UserController {
     }
 
     /**
+     * Deletes the currently authenticated user.
+     * @param authHeader JWT token
+     * @return 204 if deleted, 404 if not found
+     */
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteUser(@RequestHeader("Authorization") String authHeader) {
+        User loggedIn = TokenUtility.getUserFromHeader(authHeader, userService);
+        final boolean removed = userService.deleteUser(loggedIn);
+        if (removed) return ResponseEntity.noContent().build();
+        else return ResponseEntity.notFound().build();
+    }
+
+
+    /**
      * Initiates or manages two-factor authentication (2FA) for the authenticated user.
      * Depending on the method, either generates a QR code for TOTP setup or sends a 2FA code.
      *
@@ -145,6 +159,9 @@ public class UserController {
         } else {
             if (user.getSecretMethod() == null) {
                 userService.setSecretMethod(user, method);
+            }
+            if (Objects.equals(user.getSecretMethod(), "2fa")) {
+                return new ResponseEntity<>(HttpStatus.OK);
             }
             userService.send2faCode(user, method);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -170,5 +187,31 @@ public class UserController {
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    /**
+     * Validates a given token.
+     * @param token Token object
+     * @return true if valid, false otherwise
+     */
+    @PostMapping("/validateToken")
+    public ResponseEntity<Boolean> validateToken(@RequestBody final Token token) {
+        final boolean valid = TokenUtility.validateToken(token);
+        return new ResponseEntity<>(valid, HttpStatus.OK);
+    }
+
+
+    /**
+     * Renews a token if valid.
+     * @param token Token to renew
+     * @param authHeader JWT token
+     * @return New token or 401 if invalid
+     */
+    @PostMapping("/renewToken")
+    public ResponseEntity<Token> renewToken(@RequestBody final Token token, @RequestHeader("Authorization") String authHeader) {
+        if (TokenUtility.getUser(token, userService) == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        final Token newToken = TokenUtility.renewToken(token, TokenUtility.getTokenFromHeader(authHeader));
+        if (newToken == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(newToken, HttpStatus.OK);
     }
 }
