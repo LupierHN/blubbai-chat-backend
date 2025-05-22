@@ -35,9 +35,10 @@ public class UserController {
 
 
     /**
-     * Get the user
+     * Retrieves the currently authenticated user's profile information.
      *
-     * @return Iterable<User>
+     * @param authHeader The Authorization header containing the user's access token.
+     * @return The user object if authentication is successful, or an error response otherwise.
      */
     @GetMapping
     public ResponseEntity<?> getUser(@RequestHeader("Authorization") String authHeader){
@@ -48,10 +49,10 @@ public class UserController {
     }
 
     /**
-     * Register a new user
+     * Registers a new user account with the provided user details.
      *
-     * @param user User
-     * @return List<Token> Tokens
+     * @param user The user object containing registration information (username, email, etc.).
+     * @return A list of authentication tokens upon successful registration, or an error response.
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody final User user) {
@@ -70,10 +71,10 @@ public class UserController {
     }
 
     /**
-     * Login a user
+     * Authenticates a user with the provided credentials.
      *
-     * @param user User
-     * @return List<Token> Tokens
+     * @param user The user object containing login credentials (username and password).
+     * @return A list of authentication tokens if login is successful, or an error response.
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody final User user) {
@@ -91,10 +92,12 @@ public class UserController {
     }
 
     /**
-     * Refresh the access token
+     * Updates the authenticated user's profile information.
      *
-     * @param authHeader Authorization Header
-     * @return Token
+     * @param authHeader The Authorization header containing the user's access token.
+     * @param user The user object with updated profile data.
+     * @param oldPassword The user's current password for verification.
+     * @return The updated user object if successful, or an error response.
      */
     @PutMapping("/update")
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String authHeader,
@@ -122,7 +125,14 @@ public class UserController {
         }
     }
 
-
+    /**
+     * Initiates or manages two-factor authentication (2FA) for the authenticated user.
+     * Depending on the method, either generates a QR code for TOTP setup or sends a 2FA code.
+     *
+     * @param authHeader The Authorization header containing the user's access token.
+     * @param method The 2FA method to use (e.g., "2fa" for TOTP).
+     * @return A QR code string for TOTP setup or a status response.
+     */
     @GetMapping("/2fa")
     public ResponseEntity<?> get2faCode(@RequestHeader("Authorization") String authHeader,
                                              @RequestParam(value = "method", required = false) String method) {
@@ -142,6 +152,13 @@ public class UserController {
         }
     }
 
+    /**
+     * Verifies the submitted 2FA code for the authenticated user.
+     *
+     * @param authHeader The Authorization header containing the user's access token.
+     * @param code The 2FA code to verify.
+     * @return HTTP 200 if verification is successful, or HTTP 401 if the code is invalid.
+     */
     @PostMapping("/2fa")
     public ResponseEntity<?> verify2fa(@RequestHeader("Authorization") String authHeader,
                                              @RequestParam(value = "code", required = true) String code) {
