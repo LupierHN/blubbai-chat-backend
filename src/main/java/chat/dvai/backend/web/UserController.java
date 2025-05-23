@@ -34,6 +34,11 @@ public class UserController {
 
 
     /**
+     * constants
+     */
+    private static final String SECRET_METHOD_2FA = "2fa";
+
+    /**
      * Retrieves the currently authenticated user's profile information.
      *
      * @param authHeader The Authorization header containing the user's access token.
@@ -112,7 +117,7 @@ public class UserController {
             loggedIn.setEmail(user.getEmail());
             loggedIn.setPhoneNumber(user.getPhoneNumber());
             loggedIn.setPassword(user.getPassword());
-            if (!Objects.equals(user.getSecretMethod(), "2fa")) {
+            if (!Objects.equals(user.getSecretMethod(), SECRET_METHOD_2FA)) {
                 loggedIn.setSecretMethod(null);
             }else {
                 loggedIn.setSecretMethod(user.getSecretMethod());
@@ -131,6 +136,7 @@ public class UserController {
      */
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteUser(@RequestHeader("Authorization") String authHeader) {
+        if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         User loggedIn = TokenUtility.getUserFromHeader(authHeader, userService);
         final boolean removed = userService.deleteUser(loggedIn);
         if (removed) return ResponseEntity.noContent().build();
@@ -152,7 +158,7 @@ public class UserController {
         if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         User user = TokenUtility.getUserFromHeader(authHeader, userService);
         if (user == null) return new ResponseEntity<>(ERROR_1005, HttpStatus.INTERNAL_SERVER_ERROR);
-        if (user.getSecretMethod() == null && Objects.equals(method, "2fa")) {
+        if (user.getSecretMethod() == null && Objects.equals(method, SECRET_METHOD_2FA)) {
             userService.setSecretMethod(user, method);
             String qrCode = userService.generateAuthQRCode(user);
             return new ResponseEntity<>(qrCode, HttpStatus.OK);
@@ -160,7 +166,7 @@ public class UserController {
             if (user.getSecretMethod() == null) {
                 userService.setSecretMethod(user, method);
             }
-            if (Objects.equals(user.getSecretMethod(), "2fa")) {
+            if (Objects.equals(user.getSecretMethod(), SECRET_METHOD_2FA)) {
                 return new ResponseEntity<>(HttpStatus.OK);
             }
             userService.send2faCode(user, method);

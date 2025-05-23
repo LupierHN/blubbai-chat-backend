@@ -34,6 +34,6 @@ public class User {
     private List<Chat> chats;
 
     @OneToOne
-    @JoinColumn(name = "pnId", referencedColumnName = "pnId")
+    @JoinColumn(name = "pnId", referencedColumnName = "pnID")
     private PhoneNumber phoneNumber;
 }
