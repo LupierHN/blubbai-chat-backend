@@ -2,16 +2,11 @@ package chat.dvai.backend.service;
 
 import chat.dvai.backend.model.PhoneNumber;
 import chat.dvai.backend.model.User;
+import chat.dvai.backend.persistence.PhoneNumberRepository;
 import chat.dvai.backend.persistence.UserRepository;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import com.mashape.unirest.request.GetRequest;
-import jakarta.validation.Valid;
 import org.jboss.aerogear.security.otp.Totp;
-import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +14,8 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PhoneNumberRepository phoneNumberRepository;
 
     /**
      * Get all users
@@ -76,8 +73,15 @@ public class UserService {
         return false;
     }
 
-    public User registerUser(@Valid User user) {
-        return user;
+    public User registerUser(User user) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // Save phone number first if not null
+        if (user.getPhoneNumber() != null && user.getPhoneNumber().getPnID() == null) {
+            PhoneNumber savedNumber = phoneNumberRepository.save(user.getPhoneNumber());
+            user.setPhoneNumber(savedNumber);
+        }
+        return userRepository.save(user);
     }
 
     public boolean deleteUser(User user) {

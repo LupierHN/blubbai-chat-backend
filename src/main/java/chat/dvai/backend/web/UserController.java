@@ -64,8 +64,8 @@ public class UserController {
         List<Token> tokens = new ArrayList<>();
         try {
             if (userService.findUser(user.getUsername())) return new ResponseEntity<>(HttpStatus.CONFLICT);
-            if (ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
-            if (ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
+            if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
+            if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
             final User created = userService.registerUser(user);
             tokens.add(TokenUtility.generateAccessToken(created));
             tokens.add(TokenUtility.generateRefreshToken(created));
@@ -113,8 +113,8 @@ public class UserController {
         if (loggedIn == null) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         if (!userService.validatePassword(loggedIn.getUsername(), oldPassword)) return new ResponseEntity<>(ERROR_4002, HttpStatus.UNAUTHORIZED);
         try {
-            if (ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
-            if (ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
+            if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
+            if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
             loggedIn.setEmail(user.getEmail());
             loggedIn.setPhoneNumber(user.getPhoneNumber());
             if (user.getPassword() != null) loggedIn.setPassword(user.getPassword());
