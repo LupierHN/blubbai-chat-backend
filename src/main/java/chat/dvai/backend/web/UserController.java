@@ -116,7 +116,7 @@ public class UserController {
             if (userService.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
             loggedIn.setEmail(user.getEmail());
             loggedIn.setPhoneNumber(user.getPhoneNumber());
-            loggedIn.setPassword(user.getPassword());
+            if (user.getPassword() != null) loggedIn.setPassword(user.getPassword());
             if (!Objects.equals(user.getSecretMethod(), SECRET_METHOD_2FA)) {
                 loggedIn.setSecretMethod(null);
             }else {

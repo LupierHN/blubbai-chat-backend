@@ -30,7 +30,7 @@ public class User {
     @JoinColumn(name = "rId", referencedColumnName = "rId")
     private Role role;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Chat> chats;
 
     @OneToOne
