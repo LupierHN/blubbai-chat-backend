@@ -3,8 +3,14 @@ package chat.dvai.backend.service;
 import chat.dvai.backend.model.PhoneNumber;
 import chat.dvai.backend.model.User;
 import chat.dvai.backend.persistence.UserRepository;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+import com.mashape.unirest.request.GetRequest;
 import jakarta.validation.Valid;
 import org.jboss.aerogear.security.otp.Totp;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,14 +66,6 @@ public class UserService {
     }
 
     public void updateUser(User loggedIn) {
-    }
-
-    public boolean validatePhone(PhoneNumber phoneNumber) {
-        return false;
-    }
-
-    public boolean validateMail(String email) {
-        return false;
     }
 
     public boolean validatePassword(String username, String oldPassword) {

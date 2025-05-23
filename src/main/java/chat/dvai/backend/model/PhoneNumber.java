@@ -16,7 +16,11 @@ public class PhoneNumber {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer pnID;
-    private int prefix;
-    private int number;
+    private String country;
+    private String number;
+
+    public String getFullNumber() {
+        return "+" + country + number;
+    }
 
    }

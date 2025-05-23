@@ -21,7 +21,7 @@ public class TokenUtility {
      */
     public static Token generateRefreshToken(User user) {
         Date now = new Date();
-        Key key = Keys.hmacShaKeyFor(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
+        Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
         return new Token(Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "refresh")
@@ -39,12 +39,13 @@ public class TokenUtility {
      */
     public static Token generateAccessToken(User user) {
         Date now = new Date();
-        Key key = Keys.hmacShaKeyFor(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
+        Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
         return new Token(Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "access")
                 .claim("uId", user.getUId())
-                .claim("role", user.getRole().getRId())
+                .claim("secretMethod", user.getSecretMethod())
+                //.claim("role", user.getRole().getRId())
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + 600000))
                 .signWith(key, SignatureAlgorithm.HS512)
@@ -60,7 +61,7 @@ public class TokenUtility {
     public static Date getExpirationDate(Token token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody()
@@ -79,7 +80,7 @@ public class TokenUtility {
     public static String getSubject(Token token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody()
@@ -98,7 +99,7 @@ public class TokenUtility {
     public static Integer getRole(Token token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody()
@@ -118,7 +119,7 @@ public class TokenUtility {
     public static User getUser(Token token, UserService userService) {
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody();
@@ -158,7 +159,7 @@ public class TokenUtility {
     public static boolean validateToken(Token token) {
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody();
@@ -176,13 +177,13 @@ public class TokenUtility {
      * @return newToken
      */
     public static Token renewToken(Token token, Token accessToken) {
-        Key key = Keys.hmacShaKeyFor(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
+        Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
         Date now = new Date();
         try {
             Claims accessClaims;
             try {
                 accessClaims = Jwts.parserBuilder()
-                        .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                        .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                         .build()
                         .parseClaimsJws(accessToken.getToken())
                         .getBody();
@@ -191,7 +192,7 @@ public class TokenUtility {
             }
 
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody();
@@ -223,7 +224,7 @@ public class TokenUtility {
     public static String getTokenType(Token token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(System.getenv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody()

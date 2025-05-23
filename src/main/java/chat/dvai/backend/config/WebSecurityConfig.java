@@ -24,7 +24,10 @@ public class WebSecurityConfig {
                         authorizationManagerRequestMatcherRegistry
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
                                 .requestMatchers(HttpMethod.GET, "/error").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/error").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/tools/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/user/register").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/user/login").permitAll()
 //                                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
 //                                .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
 //                                .requestMatchers("/api/documents/**").permitAll()
