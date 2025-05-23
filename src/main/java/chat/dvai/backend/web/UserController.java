@@ -158,6 +158,10 @@ public class UserController {
         if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         User user = TokenUtility.getUserFromHeader(authHeader, userService);
         if (user == null) return new ResponseEntity<>(ERROR_1005, HttpStatus.INTERNAL_SERVER_ERROR);
+        if (method == null) {
+            method = user.getSecretMethod();
+            if (method == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         if (user.getSecretMethod() == null && Objects.equals(method, SECRET_METHOD_2FA)) {
             userService.setSecretMethod(user, method);
             String qrCode = userService.generateAuthQRCode(user);
