@@ -1,4 +1,4 @@
-package chat.dvai.backend.utils;
+package chat.dvai.backend.filter;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;

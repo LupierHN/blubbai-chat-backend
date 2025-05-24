@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,9 +48,8 @@ public class UserController {
      */
     @GetMapping
     public ResponseEntity<?> getUser(@RequestHeader("Authorization") String authHeader){
-        if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        User user = TokenUtility.getUserFromHeader(authHeader, userService);
-        if (user == null) return new ResponseEntity<>(ERROR_1005, HttpStatus.INTERNAL_SERVER_ERROR);
+        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
@@ -59,7 +59,7 @@ public class UserController {
      * @param user The user object containing registration information (username, email, etc.).
      * @return A list of authentication tokens upon successful registration, or an error response.
      */
-    @PostMapping("/register")
+    @PostMapping("/noa/register")
     public ResponseEntity<?> register(@Valid @RequestBody final User user) {
         List<Token> tokens = new ArrayList<>();
         try {
@@ -67,7 +67,7 @@ public class UserController {
             if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
             if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
             final User created = userService.registerUser(user);
-            tokens.add(TokenUtility.generateAccessToken(created));
+            tokens.add(TokenUtility.generateAccessToken(created, false));
             tokens.add(TokenUtility.generateRefreshToken(created));
             return new ResponseEntity<>(tokens, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -81,14 +81,14 @@ public class UserController {
      * @param user The user object containing login credentials (username and password).
      * @return A list of authentication tokens if login is successful, or an error response.
      */
-    @PostMapping("/login")
+    @PostMapping("/noa/login")
     public ResponseEntity<?> login(@Valid @RequestBody final User user) {
         List<Token> tokens = new ArrayList<>();
         try {
             if (!userService.findUser(user.getUsername())) return new ResponseEntity<>(ERROR_4004,HttpStatus.UNAUTHORIZED);
             if (!userService.validatePassword(user.getUsername(), user.getPassword())) return new ResponseEntity<>(ERROR_4002,HttpStatus.UNAUTHORIZED);
             final User loggedIn = userService.getUserByUsername(user.getUsername());
-            tokens.add(TokenUtility.generateAccessToken(loggedIn));
+            tokens.add(TokenUtility.generateAccessToken(loggedIn, false));
             tokens.add(TokenUtility.generateRefreshToken(loggedIn));
             return new ResponseEntity<>(tokens, HttpStatus.OK);
         } catch (Exception e) {
@@ -108,9 +108,7 @@ public class UserController {
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String authHeader,
                                            @Valid @RequestBody final User user,
                                            @RequestParam(value = "oldPassword", required = true) String oldPassword) {
-        if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        User loggedIn = TokenUtility.getUserFromHeader(authHeader, userService);
-        if (loggedIn == null) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        User loggedIn = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         if (!userService.validatePassword(loggedIn.getUsername(), oldPassword)) return new ResponseEntity<>(ERROR_4002, HttpStatus.UNAUTHORIZED);
         try {
             if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
@@ -137,8 +135,7 @@ public class UserController {
      */
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteUser(@RequestHeader("Authorization") String authHeader) {
-        if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        User loggedIn = TokenUtility.getUserFromHeader(authHeader, userService);
+        User loggedIn = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         final boolean removed = userService.deleteUser(loggedIn);
         if (removed) return ResponseEntity.noContent().build();
         else return ResponseEntity.notFound().build();
@@ -153,12 +150,11 @@ public class UserController {
      * @param method The 2FA method to use (e.g., "2fa" for TOTP).
      * @return A QR code string for TOTP setup or a status response.
      */
-    @GetMapping("/2fa")
+    @GetMapping("/no2fa/2fa")
     public ResponseEntity<?> get2faCode(@RequestHeader("Authorization") String authHeader,
                                              @RequestParam(value = "method", required = false) String method) {
-        if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        User user = TokenUtility.getUserFromHeader(authHeader, userService);
-        if (user == null) return new ResponseEntity<>(ERROR_1005, HttpStatus.INTERNAL_SERVER_ERROR);
+        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         if (method == null) {
             method = user.getSecretMethod();
             if (method == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -186,15 +182,15 @@ public class UserController {
      * @param code The 2FA code to verify.
      * @return HTTP 200 if verification is successful, or HTTP 401 if the code is invalid.
      */
-    @PostMapping("/2fa")
+    @PostMapping("/no2fa/2fa")
     public ResponseEntity<?> verify2fa(@RequestHeader("Authorization") String authHeader,
                                              @RequestParam(value = "code", required = true) String code) {
-        if (!TokenUtility.validateAuthHeader(authHeader)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        User user = TokenUtility.getUserFromHeader(authHeader, userService);
-        if (user == null) return new ResponseEntity<>(ERROR_1005, HttpStatus.INTERNAL_SERVER_ERROR);
+        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         if (user.getSecretMethod() == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         if (userService.verify2faCode(user, code)) {
-            return new ResponseEntity<>(HttpStatus.OK);
+            Token token = TokenUtility.generateAccessToken(user, true);
+            return new ResponseEntity<>(token, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
@@ -205,7 +201,7 @@ public class UserController {
      * @param token Token object
      * @return true if valid, false otherwise
      */
-    @PostMapping("/validateToken")
+    @PostMapping("/noa/validateToken")
     public ResponseEntity<Boolean> validateToken(@RequestBody final Token token) {
         final boolean valid = TokenUtility.validateToken(token);
         return new ResponseEntity<>(valid, HttpStatus.OK);
@@ -218,7 +214,7 @@ public class UserController {
      * @param authHeader JWT token
      * @return New token or 401 if invalid
      */
-    @PostMapping("/renewToken")
+    @PostMapping("/noa/renewToken")
     public ResponseEntity<Token> renewToken(@RequestBody final Token token, @RequestHeader("Authorization") String authHeader) {
         if (TokenUtility.getUser(token, userService) == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         final Token newToken = TokenUtility.renewToken(token, TokenUtility.getTokenFromHeader(authHeader));

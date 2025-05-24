@@ -1,6 +1,7 @@
-package chat.dvai.backend.utils;
+package chat.dvai.backend.filter;
 
 import chat.dvai.backend.model.Token;
+import chat.dvai.backend.utils.TokenUtility;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -37,7 +37,7 @@ public class TokenUtility {
      * @param user User
      * @return accessToken Token with expiration 10 minutes
      */
-    public static Token generateAccessToken(User user) {
+    public static Token generateAccessToken(User user, boolean twoFactorCompleted) {
         Date now = new Date();
         Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
         return new Token(Jwts.builder()
@@ -45,6 +45,7 @@ public class TokenUtility {
                 .claim("tokenType", "access")
                 .claim("uId", user.getUId())
                 .claim("secretMethod", user.getSecretMethod())
+                .claim("2fa_completed", twoFactorCompleted)
                 //.claim("role", user.getRole().getRId())
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + 600000))
@@ -177,8 +178,6 @@ public class TokenUtility {
      * @return newToken
      */
     public static Token renewToken(Token token, Token accessToken) {
-        Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
-        Date now = new Date();
         try {
             Claims accessClaims;
             try {
@@ -198,15 +197,12 @@ public class TokenUtility {
                     .getBody();
 
             if (claims.getSubject().equals(accessClaims.getSubject())) {
-                return new Token(Jwts.builder()
-                        .setSubject(accessClaims.getSubject())
-                        .claim("tokenType", "access")
-                        .claim("uId", accessClaims.get("uId"))
-                        .claim("role", accessClaims.get("role"))
-                        .setIssuedAt(now)
-                        .setExpiration(new Date(now.getTime() + 600000))
-                        .signWith(key, SignatureAlgorithm.HS512)
-                        .compact());
+                User user = new User();
+                user.setUsername(accessClaims.getSubject());
+                user.setUId(accessClaims.get("uId", Integer.class));
+                user.setSecretMethod(accessClaims.get("secretMethod", String.class));
+                //user.setRole(new Role(accessClaims.get("role", Integer.class)));
+                return generateAccessToken(user, true);
             } else {
                 return null;
             }
@@ -229,6 +225,32 @@ public class TokenUtility {
                     .parseClaimsJws(token.getToken())
                     .getBody()
                     .get("tokenType", String.class);
+        } catch (JwtException e) {
+            return null;
+        }
+    }
+
+    public static String getSecretMethod(Token token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .build()
+                    .parseClaimsJws(token.getToken())
+                    .getBody()
+                    .get("secretMethod", String.class);
+        } catch (JwtException e) {
+            return null;
+        }
+    }
+
+    public static Boolean get2FACompleted(Token token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .build()
+                    .parseClaimsJws(token.getToken())
+                    .getBody()
+                    .get("2fa_completed", Boolean.class);
         } catch (JwtException e) {
             return null;
         }
@@ -259,4 +281,26 @@ public class TokenUtility {
         if (token == null) return false;
         return validateToken(token);
     }
+
+    /**
+     * Creates a test token for development purposes
+     * WARNING: Do not use this in production!
+     *
+     * @return Token
+     */
+    public static Token createTestToken(){
+        Date now = new Date();
+        Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
+        return new Token(Jwts.builder()
+                .setSubject("lupier")
+                .claim("tokenType", "access")
+                .claim("uId", 1)
+                .claim("secretMethod", null)
+                //.claim("role", user.getRole().getRId())
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + 999999999))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact());
+    }
+
 }

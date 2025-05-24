@@ -33,7 +33,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Chat> chats;
 
-    @OneToOne
-    @JoinColumn(name = "pnId", referencedColumnName = "pnID")
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JoinColumn(name = "pnId", referencedColumnName = "pnId")
     private PhoneNumber phoneNumber;
 }

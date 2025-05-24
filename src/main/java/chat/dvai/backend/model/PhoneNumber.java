@@ -1,5 +1,7 @@
 package chat.dvai.backend.model;
 
+import chat.dvai.backend.utils.PhoneUtil;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,12 +17,19 @@ public class PhoneNumber {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer pnID;
+    private Integer pnId;
     private String country;
     private String number;
 
+    /*
+    * Constructor to create a PhoneNumber from a full number string.
+    * The string should be in the format "+<country><number>".
+    */
+
+    @JsonIgnore
+    @Transient
     public String getFullNumber() {
-        return "+" + country + number;
+        return "+" + PhoneUtil.getCountryCodeNumber(country) + number;
     }
 
    }

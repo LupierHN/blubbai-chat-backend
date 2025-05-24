@@ -15,7 +15,7 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private PhoneNumberRepository phoneNumberRepository;
+    private PhoneNumberService phoneNumberService;
 
     /**
      * Get all users
@@ -53,6 +53,11 @@ public class UserService {
     }
 
     public void setSecretMethod(User user, String method) {
+        User existingUser = userRepository.findByUsername(user.getUsername());
+        if (existingUser != null) {
+            existingUser.setSecretMethod(method);
+            userRepository.save(existingUser);
+        }
     }
 
     public String generateAuthQRCode(User user) {
@@ -66,7 +71,12 @@ public class UserService {
     }
 
     public boolean validatePassword(String username, String oldPassword) {
-        return false;
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            return false;
+        }
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        return passwordEncoder.matches(oldPassword, user.getPassword());
     }
 
     public boolean findUser(String username) {
@@ -76,10 +86,14 @@ public class UserService {
     public User registerUser(User user) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        // Save phone number first if not null
-        if (user.getPhoneNumber() != null && user.getPhoneNumber().getPnID() == null) {
-            PhoneNumber savedNumber = phoneNumberRepository.save(user.getPhoneNumber());
-            user.setPhoneNumber(savedNumber);
+        if (user.getPhoneNumber() != null) {
+            PhoneNumber phoneNumber = phoneNumberService.createPhoneNumber(user.getPhoneNumber());
+            if (phoneNumber != null) {
+                user.setPhoneNumber(phoneNumber);
+            }
+        } else {
+            // Return null if no phone number is provided (DB constraint)
+            return null;
         }
         return userRepository.save(user);
     }

@@ -1,7 +1,8 @@
 package chat.dvai.backend.config;
 
-import chat.dvai.backend.utils.JwtRequestFilter;
-import chat.dvai.backend.utils.RequestLoggingFilter;
+import chat.dvai.backend.filter.JwtRequestFilter;
+import chat.dvai.backend.filter.RequestLoggingFilter;
+import chat.dvai.backend.filter.TwoFactorAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,11 +24,9 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                         authorizationManagerRequestMatcherRegistry
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
-                                .requestMatchers(HttpMethod.GET, "/error").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/error").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/tools/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/v1/user/register").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/v1/user/login").permitAll()
+                                .requestMatchers( "/error").permitAll()
+                                .requestMatchers("/tools/**").permitAll()
+                                .requestMatchers("/api/v1/user/noa/**").permitAll()
 //                                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
 //                                .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
 //                                .requestMatchers("/api/documents/**").permitAll()
@@ -38,6 +37,7 @@ public class WebSecurityConfig {
 
         http.addFilterBefore(new RequestLoggingFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(new JwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(new TwoFactorAuthFilter(), JwtRequestFilter.class);
 
         return http.build();
     }
