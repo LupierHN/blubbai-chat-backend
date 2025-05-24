@@ -63,7 +63,7 @@ public class UserController {
     public ResponseEntity<?> register(@Valid @RequestBody final User user) {
         List<Token> tokens = new ArrayList<>();
         try {
-            if (userService.findUser(user.getUsername())) return new ResponseEntity<>(HttpStatus.CONFLICT);
+            if (userService.getUserByUsername(user.getUsername()) != null) return new ResponseEntity<>(HttpStatus.CONFLICT);
             if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
             if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
             final User created = userService.registerUser(user);
@@ -85,7 +85,7 @@ public class UserController {
     public ResponseEntity<?> login(@Valid @RequestBody final User user) {
         List<Token> tokens = new ArrayList<>();
         try {
-            if (!userService.findUser(user.getUsername())) return new ResponseEntity<>(ERROR_4004,HttpStatus.UNAUTHORIZED);
+            if (userService.getUserByUsername(user.getUsername()) != null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             if (!userService.validatePassword(user.getUsername(), user.getPassword())) return new ResponseEntity<>(ERROR_4002,HttpStatus.UNAUTHORIZED);
             final User loggedIn = userService.getUserByUsername(user.getUsername());
             tokens.add(TokenUtility.generateAccessToken(loggedIn, false));
@@ -115,7 +115,7 @@ public class UserController {
             if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
             loggedIn.setEmail(user.getEmail());
             loggedIn.setPhoneNumber(user.getPhoneNumber());
-            if (user.getPassword() != null) loggedIn.setPassword(user.getPassword());
+            if (user.getPassword() != null) userService.updatePassword(loggedIn, user.getPassword());
             if (!Objects.equals(user.getSecretMethod(), SECRET_METHOD_2FA)) {
                 loggedIn.setSecretMethod(null);
             }else {

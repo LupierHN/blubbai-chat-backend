@@ -23,7 +23,6 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
         }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            System.out.println(uri);
             Token token = new Token(authHeader.substring(7));
             if (TokenUtility.validateToken(token)) {
                 String secretMethod = TokenUtility.getSecretMethod(token);

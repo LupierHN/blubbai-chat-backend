@@ -27,10 +27,6 @@ public class WebSecurityConfig {
                                 .requestMatchers( "/error").permitAll()
                                 .requestMatchers("/tools/**").permitAll()
                                 .requestMatchers("/api/v1/user/noa/**").permitAll()
-//                                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-//                                .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
-//                                .requestMatchers("/api/documents/**").permitAll()
-//                                .requestMatchers("/api/history/**").permitAll()
                                 .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

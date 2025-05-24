@@ -21,11 +21,10 @@ public class PhoneNumber {
     private String country;
     private String number;
 
-    /*
-    * Constructor to create a PhoneNumber from a full number string.
-    * The string should be in the format "+<country><number>".
-    */
-
+    /**
+     * Get the full phone number in E.164 format.
+     * @return String in the format "+[country_code][Number]"
+     */
     @JsonIgnore
     @Transient
     public String getFullNumber() {
