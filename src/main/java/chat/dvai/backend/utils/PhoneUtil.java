@@ -5,10 +5,10 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 public class PhoneUtil {
 
     /**
-     * Returns the country code number for a given country name.
+     * Returns the country code number for a given country ISO2 Code.
      *
-     * @param country The name of the country (e.g., "India", "United States").
-     * @return The country code number (e.g., 91 for India, 1 for the United States).
+     * @param country The name of the country (e.g., "DE", "US").
+     * @return The country code number (e.g., 49 for Germany, 1 for the United States).
      */
     public static int getCountryCodeNumber(String country) {
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
