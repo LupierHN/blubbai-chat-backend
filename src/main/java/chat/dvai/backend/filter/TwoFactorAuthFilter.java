@@ -9,7 +9,31 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
+/**
+ * TwoFactorAuthFilter
+ *
+ * This filter enforces two-factor authentication (2FA) for protected endpoints.
+ * It checks the JWT for 2FA completion and secret method, and blocks requests if 2FA is required but not completed.
+ *
+ * <h2>Behavior:</h2>
+ * <ul>
+ *     <li>Skips endpoints containing "/no2fa" or "/noa".</li>
+ *     <li>Checks for a valid JWT in the Authorization header.</li>
+ *     <li>If 2FA is required but not completed, responds with 403 Forbidden and a JSON message.</li>
+ *     <li>If 2FA method is not set, responds with 400 Bad Request and a JSON message.</li>
+ *     <li>Otherwise, allows the request to proceed.</li>
+ * </ul>
+ */
 public class TwoFactorAuthFilter extends OncePerRequestFilter {
+    /**
+     * Checks for 2FA requirements and blocks requests if not fulfilled.
+     *
+     * @param request  The HTTP request.
+     * @param response The HTTP response.
+     * @param filterChain The filter chain.
+     * @throws ServletException If an error occurs during request processing.
+     * @throws IOException If an I/O error occurs during request processing.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {

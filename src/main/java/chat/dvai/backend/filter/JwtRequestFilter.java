@@ -14,9 +14,33 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * JwtRequestFilter
+ * <p>
+ * This filter intercepts incoming HTTP requests and checks for a valid JWT in the Authorization header.
+ * If a valid access token is found, it sets the authentication in the Spring Security context.
+ *
+ * <h2>Behavior:</h2>
+ * <ul>
+ *     <li>Checks for "Bearer &lt;token&gt;" in the Authorization header.</li>
+ *     <li>Validates the token and extracts the username.</li>
+ *     <li>Sets the authentication in the SecurityContext if valid.</li>
+ *     <li>Does not block the request if the token is missing or invalid (other filters may handle this).</li>
+ * </ul>
+ */
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
+    /**
+     * Intercepts each request to check for a valid JWT access token.
+     * If valid, sets the authentication in the SecurityContext.
+     *
+     * @param request  The HTTP request.
+     * @param response The HTTP response.
+     * @param filterChain The filter chain.
+     * @throws ServletException if an error occurs during request processing.
+     * @throws IOException if an I/O error occurs during request processing.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
