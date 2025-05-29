@@ -15,6 +15,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PhoneNumber {
 
+    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer pnId;

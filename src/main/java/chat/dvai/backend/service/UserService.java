@@ -206,11 +206,7 @@ public class UserService {
      * @return String secret or null if not found.
      */
     private String getSecret(User user) {
-        User u = getUser(user.getUId());
-        if (u != null) {
-            return userRepository.getSecretByUId(user.getUId());
-        }
-        return null;
+        return getUser(user.getUId()).getSecret();
     }
 
     /**
@@ -219,6 +215,6 @@ public class UserService {
      * @return String password hash.
      */
     private String getPassword(User user) {
-        return userRepository.getPasswordByUId(user.getUId());
+        return getUser(user.getUId()).getPassword();
     }
 }

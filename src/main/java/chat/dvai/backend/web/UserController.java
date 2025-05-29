@@ -61,6 +61,7 @@ public class UserController {
     private static final ErrorResponse ERROR_1002 = new ErrorResponse(1002, "Invalid E-Mail");
     private static final ErrorResponse ERROR_1004 = new ErrorResponse(1004, "Invalid Phone");
     private static final ErrorResponse ERROR_4002 = new ErrorResponse(4002, "Wrong Password");
+    private static final ErrorResponse ERROR_4003 = new ErrorResponse(4003, "2FA Code wrong or expired");
 
 
     /**
@@ -282,7 +283,7 @@ public class UserController {
             Token token = TokenUtility.generateAccessToken(user, true);
             return new ResponseEntity<>(token, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(ERROR_4003,HttpStatus.UNAUTHORIZED);
         }
     }
 
