@@ -66,9 +66,9 @@ public class UserService {
      * @param user User object containing the new user's information.
      * @return User object if registration is successful, null if no phone number is provided.
      */
-    public User registerUser(User user) {
+    public User registerUser(User user)  {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        user.setPassword(passwordEncoder.encode(getPassword(user)));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getPhoneNumber() != null) {
             PhoneNumber phoneNumber = phoneNumberService.createPhoneNumber(user.getPhoneNumber());
             if (phoneNumber != null) {
@@ -136,7 +136,7 @@ public class UserService {
             return false;
         }
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        return passwordEncoder.matches(password, getPassword(user));
+        return passwordEncoder.matches(password, user.getPassword());
     }
 
     // -------------------- Two-Factor Authentication (2FA) --------------------
@@ -195,7 +195,7 @@ public class UserService {
         String secret = getSecret(user);
         String name = user.getUsername()+"@BlubbAI";
         Totp totp = new Totp(secret);
-        return totp.uri(name);
+        return totp.uri(name)+"&issuer=BlubbAI";
     }
 
     // -------------------- Internal Helper Methods --------------------
@@ -207,14 +207,5 @@ public class UserService {
      */
     private String getSecret(User user) {
         return getUser(user.getUId()).getSecret();
-    }
-
-    /**
-     * Get the password hash of a user.
-     * @param user User object.
-     * @return String password hash.
-     */
-    private String getPassword(User user) {
-        return getUser(user.getUId()).getPassword();
     }
 }

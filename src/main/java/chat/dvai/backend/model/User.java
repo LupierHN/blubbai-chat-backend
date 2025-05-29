@@ -21,7 +21,6 @@ public class User {
     private Integer uId;
     private String username;
     private String email;
-    @JsonIgnore
     private String password;
     @JsonIgnore
     private String secret = Base32.random();
