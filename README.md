@@ -1,11 +1,11 @@
-# chat.dvai Backend
+# chat.blubbai Backend
 
 ![Build & Test](https://img.shields.io/badge/build-passing-brightgreen)
 ![Docker](https://img.shields.io/badge/docker-enabled-blue)
 
 ## 🚀 Project Overview
 
-**backend.chat.dvai** is a Spring Boot microservice that serves as a REST API for a chat client.  
+**backend.chat.blubbai** is a Spring Boot microservice that serves as a REST API for a chat client.  
 It is implemented in Java (Gradle) and uses PostgreSQL as its database. The entire system runs containerized via Docker Compose.
 
 ---
@@ -37,7 +37,7 @@ It is implemented in Java (Gradle) and uses PostgreSQL as its database. The enti
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/backend.chat.dvai.git
+   git clone <gitURL>
    cd backend.chat.dvai
     ```
 2. Adjust environment variables (see  [Environment Variables](#-environment-variables)).
@@ -110,7 +110,7 @@ JWT_SECRET=mysecret #Key for JWT signing must be at least 256 bits
 
 ## 📂 Project Structure
 ```plaintext
-backend.chat.dvai/
+blubbai-chat-backend/
 ├── src/                       # Source code
 │   ├── main/                  # Java source code
 │   ├── test/                  # Test source code
