@@ -31,6 +31,8 @@ public class UserService {
     private UserRepository userRepository;
     @Autowired
     private PhoneNumberService phoneNumberService;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     // -------------------- User CRUD Operations --------------------
 
@@ -67,7 +69,6 @@ public class UserService {
      * @return User object if registration is successful, null if no phone number is provided.
      */
     public User registerUser(User user)  {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getPhoneNumber() != null) {
             PhoneNumber phoneNumber = phoneNumberService.createPhoneNumber(user.getPhoneNumber());
@@ -118,7 +119,6 @@ public class UserService {
     public void updatePassword(User user, String password) {
         User existingUser = getUser(user.getUId());
         if (existingUser != null) {
-            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             existingUser.setPassword(passwordEncoder.encode(password));
             userRepository.save(existingUser);
         }
@@ -135,7 +135,6 @@ public class UserService {
         if (user == null) {
             return false;
         }
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return passwordEncoder.matches(password, user.getPassword());
     }
 
