@@ -13,6 +13,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_URL=${DB_URL}
       - DB_USER=${DB_USER}
+      - JWT_SECRET${JWT_SECRET}
+      - PHONE_VALIDATION_API_KEY=${PHONE_VALIDATION_API_KEY}
+      - MAIL_VALIDATION_API_KEY=${MAIL_VALIDATION_API_KEY}
   db:
     image: postgres:latest
     container_name: db.chat.dvai
