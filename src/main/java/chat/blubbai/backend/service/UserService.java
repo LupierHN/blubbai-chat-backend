@@ -4,11 +4,14 @@ package chat.blubbai.backend.service;
 
 import chat.blubbai.backend.model.PhoneNumber;
 import chat.blubbai.backend.model.User;
+import chat.blubbai.backend.model.enums.Method2FA;
 import chat.blubbai.backend.persistence.UserRepository;
 import org.jboss.aerogear.security.otp.Totp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /**
  * UserService
@@ -49,8 +52,8 @@ public class UserService {
      * @param uId User ID.
      * @return User object or null if not found.
      */
-    public User getUser(Integer uId) {
-        return this.userRepository.findById(uId).orElse(null);
+    public User getUser(UUID uId) {
+        return this.userRepository.findByUId(uId);
     }
 
     /**
@@ -60,25 +63,6 @@ public class UserService {
      */
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username);
-    }
-
-    /**
-     * Register a new user.
-     * Encodes the password, ensures a phone number is set, and saves the user.
-     * @param user User object containing the new user's information.
-     * @return User object if registration is successful, null if no phone number is provided.
-     */
-    public User registerUser(User user)  {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (user.getPhoneNumber() != null) {
-            PhoneNumber phoneNumber = phoneNumberService.createPhoneNumber(user.getPhoneNumber());
-            if (phoneNumber != null) {
-                user.setPhoneNumber(phoneNumber);
-            }
-        } else {
-            return null;
-        }
-        return userRepository.save(user);
     }
 
     /**
@@ -157,7 +141,7 @@ public class UserService {
      * @param user   User object.
      * @param method The method to send the code (e.g., "SMS", "email").
      */
-    public void send2faCode(User user, String method) {
+    public void send2faCode(User user, Method2FA method) {
         // This method is a placeholder for sending the 2FA code via the specified method.
         // Implementation would depend on the method (e.g., SMS, email) and is not provided here.
         // For demonstration, the code is printed to the console.
@@ -177,7 +161,7 @@ public class UserService {
      * @param user   User object.
      * @param method The secret method to set.
      */
-    public void setSecretMethod(User user, String method) {
+    public void setSecretMethod(User user, Method2FA method) {
         User existingUser = getUser(user.getUId());
         if (existingUser != null) {
             existingUser.setSecretMethod(method);

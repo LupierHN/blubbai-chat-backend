@@ -1,8 +1,9 @@
 package chat.blubbai.backend.web;
 
-import chat.blubbai.backend.model.ErrorResponse;
-import chat.blubbai.backend.model.Token;
+import chat.blubbai.backend.model.enums.ErrorResponse;
+import chat.blubbai.backend.model.AccessTokenDTO;
 import chat.blubbai.backend.model.User;
+import chat.blubbai.backend.model.enums.Method2FA;
 import chat.blubbai.backend.service.UserService;
 import chat.blubbai.backend.utils.TokenUtility;
 import chat.blubbai.backend.utils.ExternalApi;
@@ -56,20 +57,6 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * Error Codes
-     */
-    private static final ErrorResponse ERROR_1002 = new ErrorResponse(1002, "Invalid E-Mail");
-    private static final ErrorResponse ERROR_1004 = new ErrorResponse(1004, "Invalid Phone");
-    private static final ErrorResponse ERROR_4002 = new ErrorResponse(4002, "Wrong Password");
-    private static final ErrorResponse ERROR_4003 = new ErrorResponse(4003, "2FA Code wrong or expired");
-
-
-    /**
-     * constants
-     */
-    private static final String SECRET_METHOD_2FA = "2fa";
-
-    /**
      * GET /api/v1/user
      * <p>
      * Retrieves the currently authenticated user's profile information.
@@ -86,66 +73,8 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> getUser(@RequestHeader("Authorization") String authHeader){
         User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (user == null) return new ResponseEntity<>(ErrorResponse.USER_NOT_FOUND,HttpStatus.NOT_FOUND);
         return new ResponseEntity<>(user, HttpStatus.OK);
-    }
-
-    /**
-     * POST /api/v1/user/noa/register
-     * <p>
-     * Registers a new user account with the provided user details.
-     * <p>
-     * <b>Request:</b> JSON body with user details (username, email, phone, password, etc.)<br>
-     * <b>Response:</b>
-     * <ul>
-     *     <li>201 Created: List of authentication tokens (access, refresh)</li>
-     *     <li>400 Bad Request: Invalid email or phone</li>
-     *     <li>409 Conflict: Username already exists</li>
-     *     <li>500 Internal Server Error: On unexpected error</li>
-     * </ul>
-     */
-    @PostMapping("/noa/register")
-    public ResponseEntity<?> register(@Valid @RequestBody final User user) {
-        List<Token> tokens = new ArrayList<>();
-        try {
-            if (userService.getUserByUsername(user.getUsername()) != null) return new ResponseEntity<>(HttpStatus.CONFLICT);
-            if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
-            if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
-            final User created = userService.registerUser(user);
-            tokens.add(TokenUtility.generateAccessToken(created, false));
-            tokens.add(TokenUtility.generateRefreshToken(created));
-            return new ResponseEntity<>(tokens, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * POST /api/v1/user/noa/login
-     * <p>
-     * Authenticates a user with the provided credentials.
-     * <p>
-     * <b>Request:</b> JSON body with username and password.<br>
-     * <b>Response:</b>
-     * <ul>
-     *     <li>200 OK: List of authentication tokens (access, refresh)</li>
-     *     <li>401 Unauthorized: Invalid credentials</li>
-     *     <li>500 Internal Server Error: On unexpected error</li>
-     * </ul>
-     */
-    @PostMapping("/noa/login")
-    public ResponseEntity<?> login(@Valid @RequestBody final User user) {
-        List<Token> tokens = new ArrayList<>();
-        try {
-            if (userService.getUserByUsername(user.getUsername()) != null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-            if (!userService.validatePassword(user.getUsername(), user.getPassword())) return new ResponseEntity<>(ERROR_4002,HttpStatus.UNAUTHORIZED);
-            final User loggedIn = userService.getUserByUsername(user.getUsername());
-            tokens.add(TokenUtility.generateAccessToken(loggedIn, false));
-            tokens.add(TokenUtility.generateRefreshToken(loggedIn));
-            return new ResponseEntity<>(tokens, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     /**
@@ -167,19 +96,20 @@ public class UserController {
      *     <li>500 Internal Server Error: On unexpected error</li>
      * </ul>
      */
+    // TODO: 2FA übergabe verbessern -> wie STRING in ENUM umwandeln
     @PutMapping("/update")
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String authHeader,
                                            @Valid @RequestBody final User user,
                                            @RequestParam(value = "oldPassword", required = true) String oldPassword) {
         User loggedIn = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        if (!userService.validatePassword(loggedIn.getUsername(), oldPassword)) return new ResponseEntity<>(ERROR_4002, HttpStatus.UNAUTHORIZED);
+        if (!userService.validatePassword(loggedIn.getUsername(), oldPassword)) return new ResponseEntity<>(ErrorResponse.INVALID_PASSWORD, HttpStatus.UNAUTHORIZED);
         try {
-            if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ERROR_1002,HttpStatus.BAD_REQUEST);
-            if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ERROR_1004,HttpStatus.BAD_REQUEST);
+            if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ErrorResponse.BAD_EMAIL,HttpStatus.BAD_REQUEST);
+            if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ErrorResponse.BAD_PHONE,HttpStatus.BAD_REQUEST);
             loggedIn.setEmail(user.getEmail());
             loggedIn.setPhoneNumber(user.getPhoneNumber());
             if (user.getPassword() != null) userService.updatePassword(loggedIn, user.getPassword());
-            if (!Objects.equals(user.getSecretMethod(), SECRET_METHOD_2FA)) {
+            if (!Objects.equals(user.getSecretMethod(), Method2FA.AUTHENTICATOR)) {
                 loggedIn.setSecretMethod(null);
             }else {
                 loggedIn.setSecretMethod(user.getSecretMethod());
@@ -210,121 +140,5 @@ public class UserController {
         final boolean removed = userService.deleteUser(loggedIn);
         if (removed) return ResponseEntity.noContent().build();
         else return ResponseEntity.notFound().build();
-    }
-
-    /**
-     * GET /api/v1/user/no2fa/2fa
-     * <p>
-     * Initiates or manages two-factor authentication (2FA) for the authenticated user.
-     * Depending on the method, either generates a QR code for TOTP setup or sends a 2FA code.
-     * <p>
-     * <b>Request:</b>
-     * <ul>
-     *     <li>Authorization header with valid JWT</li>
-     *     <li>Query param: method (optional, e.g., "2fa")</li>
-     * </ul>
-     * <b>Response:</b>
-     * <ul>
-     *     <li>200 OK: QR code string or status</li>
-     *     <li>400 Bad Request: If method is missing</li>
-     *     <li>404 Not Found: User not found</li>
-     *     <li>401 Unauthorized: If JWT is missing or invalid (handled by filter)</li>
-     * </ul>
-     */
-    @GetMapping("/no2fa/2fa")
-    public ResponseEntity<?> get2faCode(@RequestHeader("Authorization") String authHeader,
-                                             @RequestParam(value = "method", required = false) String method) {
-        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        if (method == null) {
-            method = user.getSecretMethod();
-            if (method == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        if (user.getSecretMethod() == null && Objects.equals(method, SECRET_METHOD_2FA)) {
-            userService.setSecretMethod(user, method);
-            String qrCode = userService.generateAuthQRCode(user);
-            return new ResponseEntity<>(qrCode, HttpStatus.OK);
-        } else {
-            if (user.getSecretMethod() == null) {
-                userService.setSecretMethod(user, method);
-            }
-            if (Objects.equals(user.getSecretMethod(), SECRET_METHOD_2FA)) {
-                return new ResponseEntity<>(HttpStatus.OK);
-            }
-            userService.send2faCode(user, method);
-            return new ResponseEntity<>(HttpStatus.OK);
-        }
-    }
-
-    /**
-     * POST /api/v1/user/no2fa/2fa
-     * <p>
-     * Verifies the submitted 2FA code for the authenticated user.
-     * <p>
-     * <b>Request:</b>
-     * <ul>
-     *     <li>Authorization header with valid JWT</li>
-     *     <li>Query param: code (required)</li>
-     * </ul>
-     * <b>Response:</b>
-     * <ul>
-     *     <li>200 OK: If verification is successful (returns new access token)</li>
-     *     <li>401 Unauthorized: If code is invalid or 2FA not set up</li>
-     *     <li>404 Not Found: User not found</li>
-     * </ul>
-     */
-    @PostMapping("/no2fa/2fa")
-    public ResponseEntity<?> verify2fa(@RequestHeader("Authorization") String authHeader,
-                                             @RequestParam(value = "code", required = true) String code) {
-        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        if (user.getSecretMethod() == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        if (userService.verify2faCode(user, code)) {
-            Token token = TokenUtility.generateAccessToken(user, true);
-            return new ResponseEntity<>(token, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(ERROR_4003,HttpStatus.UNAUTHORIZED);
-        }
-    }
-
-    /**
-     * POST /api/v1/user/noa/validateToken
-     * <p>
-     * Validates a given token.
-     * <p>
-     * <b>Request:</b> JSON body with token.<br>
-     * <b>Response:</b>
-     * <ul>
-     *     <li>200 OK: true if valid, false otherwise</li>
-     * </ul>
-     */
-    @PostMapping("/noa/validateToken")
-    public ResponseEntity<Boolean> validateToken(@RequestBody final Token token) {
-        final boolean valid = TokenUtility.validateToken(token);
-        return new ResponseEntity<>(valid, HttpStatus.OK);
-    }
-
-    /**
-     * POST /api/v1/user/noa/renewToken
-     * <p>
-     * Renews a token if valid.
-     * <p>
-     * <b>Request:</b>
-     * <ul>
-     *     <li>JSON body with token</li>
-     *     <li>Authorization header with valid JWT</li>
-     * </ul>
-     * <b>Response:</b>
-     * <ul>
-     *     <li>200 OK: New token</li>
-     *     <li>401 Unauthorized: If token is invalid or user not found</li>
-     * </ul>
-     */
-    @PostMapping("/noa/renewToken")
-    public ResponseEntity<Token> renewToken(@RequestBody final Token token, @RequestHeader("Authorization") String authHeader) {
-        if (TokenUtility.getUser(token, userService) == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        final Token newToken = TokenUtility.renewToken(token, TokenUtility.getTokenFromHeader(authHeader));
-        if (newToken == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        return new ResponseEntity<>(newToken, HttpStatus.OK);
     }
 }

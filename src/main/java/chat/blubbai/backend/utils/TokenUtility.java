@@ -1,6 +1,6 @@
 package chat.blubbai.backend.utils;
 
-import chat.blubbai.backend.model.Token;
+import chat.blubbai.backend.model.AccessTokenDTO;
 import chat.blubbai.backend.model.User;
 import chat.blubbai.backend.service.UserService;
 import io.jsonwebtoken.*;
@@ -10,6 +10,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 public class TokenUtility {
 
@@ -19,10 +20,10 @@ public class TokenUtility {
      * @param user User
      * @return refreshToken Token with expiration 14 days
      */
-    public static Token generateRefreshToken(User user) {
+    public static AccessTokenDTO generateRefreshToken(User user) {
         Date now = new Date();
         Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
-        return new Token(Jwts.builder()
+        return new AccessTokenDTO(Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "refresh")
                 .setIssuedAt(now)
@@ -37,10 +38,10 @@ public class TokenUtility {
      * @param user User
      * @return accessToken Token with expiration 10 minutes
      */
-    public static Token generateAccessToken(User user, boolean twoFactorCompleted) {
+    public static AccessTokenDTO generateAccessToken(User user, boolean twoFactorCompleted) {
         Date now = new Date();
         Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
-        return new Token(Jwts.builder()
+        return new AccessTokenDTO(Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "access")
                 .claim("uId", user.getUId())
@@ -59,7 +60,7 @@ public class TokenUtility {
      * @param token Token
      * @return expirationDate
      */
-    public static Date getExpirationDate(Token token) {
+    public static Date getExpirationDate(AccessTokenDTO token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -78,7 +79,7 @@ public class TokenUtility {
      * @param token Token
      * @return subject
      */
-    public static String getSubject(Token token) {
+    public static String getSubject(AccessTokenDTO token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -97,7 +98,7 @@ public class TokenUtility {
      * @param token Token
      * @return role
      */
-    public static Integer getRole(Token token) {
+    public static Integer getRole(AccessTokenDTO token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -117,7 +118,7 @@ public class TokenUtility {
      * @param userService UserService
      * @return user User
      */
-    public static User getUser(Token token, UserService userService) {
+    public static User getUser(AccessTokenDTO token, UserService userService) {
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -146,7 +147,7 @@ public class TokenUtility {
      * @return user User
      */
     public static User getUserFromHeader(String header, UserService userService) {
-        Token token = TokenUtility.getTokenFromHeader(header);
+        AccessTokenDTO token = TokenUtility.getTokenFromHeader(header);
         assert token != null;
         return getUser(token, userService);
     }
@@ -157,7 +158,7 @@ public class TokenUtility {
      * @param token a Token
      * @return boolean
      */
-    public static boolean validateToken(Token token) {
+    public static boolean validateToken(AccessTokenDTO token) {
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -177,7 +178,7 @@ public class TokenUtility {
      * @param accessToken accessToken
      * @return newToken
      */
-    public static Token renewToken(Token token, Token accessToken) {
+    public static AccessTokenDTO renewToken(AccessTokenDTO token, AccessTokenDTO accessToken) {
         try {
             Claims accessClaims;
             try {
@@ -199,8 +200,7 @@ public class TokenUtility {
             if (claims.getSubject().equals(accessClaims.getSubject())) {
                 User user = new User();
                 user.setUsername(accessClaims.getSubject());
-                user.setUId(accessClaims.get("uId", Integer.class));
-                user.setSecretMethod(accessClaims.get("secretMethod", String.class));
+                user.setUId(accessClaims.get("uId", UUID.class));
                 //user.setRole(new Role(accessClaims.get("role", Integer.class)));
                 return generateAccessToken(user, true);
             } else {
@@ -217,7 +217,7 @@ public class TokenUtility {
      * @param token Token
      * @return tokenType (access/refresh)
      */
-    public static String getTokenType(Token token) {
+    public static String getTokenType(AccessTokenDTO token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -230,7 +230,7 @@ public class TokenUtility {
         }
     }
 
-    public static String getSecretMethod(Token token) {
+    public static String getSecretMethod(AccessTokenDTO token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -243,7 +243,7 @@ public class TokenUtility {
         }
     }
 
-    public static Boolean get2FACompleted(Token token) {
+    public static Boolean get2FACompleted(AccessTokenDTO token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
@@ -262,9 +262,9 @@ public class TokenUtility {
      * @param authHeader Authorization Header
      * @return token accessToken
      */
-    public static Token getTokenFromHeader(String authHeader) {
+    public static AccessTokenDTO getTokenFromHeader(String authHeader) {
         try {
-            return new Token(authHeader.substring(7));
+            return new AccessTokenDTO(authHeader.substring(7));
         } catch (Exception e) {
             return null;
         }
@@ -277,7 +277,7 @@ public class TokenUtility {
      * @return boolean
      */
     public static boolean validateAuthHeader( String authHeader) {
-        Token token = getTokenFromHeader(authHeader);
+        AccessTokenDTO token = getTokenFromHeader(authHeader);
         if (token == null) return false;
         return validateToken(token);
     }
@@ -288,10 +288,10 @@ public class TokenUtility {
      *
      * @return Token
      */
-    public static Token createTestToken(){
+    public static AccessTokenDTO createTestToken(){
         Date now = new Date();
         Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
-        return new Token(Jwts.builder()
+        return new AccessTokenDTO(Jwts.builder()
                 .setSubject("lupier")
                 .claim("tokenType", "access")
                 .claim("uId", 1)

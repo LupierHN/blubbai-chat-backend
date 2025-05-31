@@ -1,6 +1,6 @@
 package chat.blubbai.backend.filter;
 
-import chat.blubbai.backend.model.Token;
+import chat.blubbai.backend.model.AccessTokenDTO;
 import chat.blubbai.backend.utils.TokenUtility;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,7 +47,7 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
         }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            Token token = new Token(authHeader.substring(7));
+            AccessTokenDTO token = new AccessTokenDTO(authHeader.substring(7));
             if (TokenUtility.validateToken(token)) {
                 String secretMethod = TokenUtility.getSecretMethod(token);
                 boolean is2FACompleted = Boolean.TRUE.equals(TokenUtility.get2FACompleted(token));
