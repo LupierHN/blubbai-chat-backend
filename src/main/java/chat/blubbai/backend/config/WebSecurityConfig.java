@@ -26,7 +26,7 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
                                 .requestMatchers( "/error").permitAll()
                                 .requestMatchers("/tools/**").permitAll()
-                                .requestMatchers("/api/v1/user/noa/**").permitAll()
+                                .requestMatchers("/api/v1/auth/noa/**").permitAll()
                                 .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

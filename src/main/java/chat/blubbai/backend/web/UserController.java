@@ -4,6 +4,7 @@ import chat.blubbai.backend.model.enums.ErrorResponse;
 import chat.blubbai.backend.model.AccessTokenDTO;
 import chat.blubbai.backend.model.User;
 import chat.blubbai.backend.model.enums.Method2FA;
+import chat.blubbai.backend.service.AuthService;
 import chat.blubbai.backend.service.UserService;
 import chat.blubbai.backend.utils.TokenUtility;
 import chat.blubbai.backend.utils.ExternalApi;
@@ -55,6 +56,7 @@ import java.util.Objects;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     /**
      * GET /api/v1/user
@@ -72,9 +74,9 @@ public class UserController {
      */
     @GetMapping
     public ResponseEntity<?> getUser(@RequestHeader("Authorization") String authHeader){
-        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        if (user == null) return new ResponseEntity<>(ErrorResponse.USER_NOT_FOUND,HttpStatus.NOT_FOUND);
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        User user = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()); // get the username from the security context
+        if (user == null) return new ResponseEntity<>(ErrorResponse.USER_NOT_FOUND,HttpStatus.NOT_FOUND); // if user is not found, return 404
+        return new ResponseEntity<>(user, HttpStatus.OK); // return the user object with 200 OK
     }
 
     /**
@@ -102,7 +104,7 @@ public class UserController {
                                            @Valid @RequestBody final User user,
                                            @RequestParam(value = "oldPassword", required = true) String oldPassword) {
         User loggedIn = userService.getUserByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        if (!userService.validatePassword(loggedIn.getUsername(), oldPassword)) return new ResponseEntity<>(ErrorResponse.INVALID_PASSWORD, HttpStatus.UNAUTHORIZED);
+        if (!authService.validatePassword(loggedIn.getUsername(), oldPassword)) return new ResponseEntity<>(ErrorResponse.INVALID_PASSWORD, HttpStatus.UNAUTHORIZED);
         try {
             if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ErrorResponse.BAD_EMAIL,HttpStatus.BAD_REQUEST);
             if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ErrorResponse.BAD_PHONE,HttpStatus.BAD_REQUEST);

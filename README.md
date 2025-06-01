@@ -7,6 +7,7 @@
 
 **backend.chat.blubbai** is a Spring Boot microservice that serves as a REST API for a chat client.  
 It is implemented in Java (Gradle) and uses PostgreSQL as its database. The entire system runs containerized via Docker Compose.
+Documentation: [BlubbAIDoc](https://silent-capri-0d5.notion.site/20349b181d6a804398d1dd0272aee58b?v=20349b181d6a80a6962b000c8a666ff6&source=copy_link)
 
 ---
 

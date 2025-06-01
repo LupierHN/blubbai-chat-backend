@@ -1,6 +1,7 @@
 package chat.blubbai.backend.filter;
 
 import chat.blubbai.backend.model.AccessTokenDTO;
+import chat.blubbai.backend.model.enums.ErrorResponse;
 import chat.blubbai.backend.utils.TokenUtility;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -54,12 +55,12 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
                 if (secretMethod == null && !is2FACompleted) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"2fa_required\": true, \"message\": \"2FA verification required\"}");
+                    response.getWriter().write("{\"error_code\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getValue() + "\", \"message\": \""+ ErrorResponse.TWO_FACTOR_REQUIRED.getMessage() + "\"} }");
                     return;
                 }else if (secretMethod == null) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"2fa_method\": null, \"message\": \"2FA Method not set\"}");
+                    response.getWriter().write("{\"error_code\": \"" + ErrorResponse.METHOD_NOT_SET.getValue() + "\", \"message\": \"" + ErrorResponse.METHOD_NOT_SET.getMessage() + "\"}");
                     return;
                 }
             }
