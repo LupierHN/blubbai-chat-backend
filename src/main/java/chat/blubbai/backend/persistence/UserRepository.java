@@ -9,5 +9,5 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends CrudRepository<User, Integer> {
     User findByUsername(String username);
-    User findByUId(UUID uId);
+    User findByUUID(UUID uId);
 }

@@ -53,7 +53,7 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
                 String secretMethod = TokenUtility.getSecretMethod(token);
                 Boolean isMailVerified = TokenUtility.getMailVerified(token);
                 boolean is2FACompleted = Boolean.TRUE.equals(TokenUtility.get2FACompleted(token));
-                if (!isMailVerified) {
+                if (Boolean.FALSE.equals(isMailVerified)) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"error_code\": \"" + ErrorResponse.MAIL_NOT_VERIFIED.getValue() + "\", \"message\": \"" + ErrorResponse.MAIL_NOT_VERIFIED.getMessage() + "\"}");

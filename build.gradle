@@ -29,7 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'com.mashape.unirest:unirest-java:1.4.9'
-	implementation 'org.eclipse.angus:angus-mail:2.0.3'
+	implementation 'io.mailtrap:mailtrap-java:1.0.0'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'org.jboss.aerogear:aerogear-otp-java:1.0.0'
 	implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.6'

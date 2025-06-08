@@ -20,7 +20,8 @@ public enum ErrorResponse {
     INVALID_2FA(4003,"2FA Code wrong or expired"),
     TOKEN_EXPIRED(4004,"Token expired"),
     TWO_FACTOR_REQUIRED(4005,"2FA required"),
-    MAIL_NOT_VERIFIED(4006,"E-mail not verified");
+    MAIL_NOT_VERIFIED(4006,"E-mail not verified"),
+    INVALID_TOKEN(4007, "Invalid token");
 
     private final String message;
     private final int value;

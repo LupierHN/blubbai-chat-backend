@@ -1,45 +1,74 @@
 package chat.blubbai.backend.utils;
 
-import jakarta.mail.*;
-import jakarta.mail.internet.*;
-import java.util.Properties;
+// Looking to send emails in production? Check out our Email API/SMTP product!
+import io.mailtrap.client.MailtrapClient;
+import io.mailtrap.config.MailtrapConfig;
+import io.mailtrap.factory.MailtrapClientFactory;
+import io.mailtrap.model.request.emails.Address;
+import io.mailtrap.model.request.emails.MailtrapMail;
+
+import java.util.List;
+import java.util.Map;
 
 public class MailUtility {
-    Session session;
 
-    public MailUtility() {
-        Properties prop = new Properties();
-        prop.put("mail.smtp.auth", true);
-        prop.put("mail.smtp.starttls.enable", "true");
-        prop.put("mail.smtp.host", EnvProvider.getEnv("MAILTRAP_SMTP_HOST"));
-        prop.put("mail.smtp.port", EnvProvider.getEnv("MAILTRAP_SMTP_PORT"));
-        prop.put("mail.smtp.ssl.trust", EnvProvider.getEnv("MAILTRAP_SMTP_HOST"));
+    /**
+     * Sends an email to the user with a verification link.
+     *
+     * @param to          The recipient's email address.
+     * @param subjectName The name of the recipient, used in the email template.
+     * @param link        The verification link to be included in the email.
+     */
+    static public void sendEmailVerificationEmail(String to, String subjectName, String link) {
+        final MailtrapConfig config = new MailtrapConfig.Builder()
+                .sandbox(true)
+                .inboxId(3784628L)
+                .token(EnvProvider.getEnv("MAILTRAP_API_KEY_SANDBOX"))
+                .build();
 
-        this.session = Session.getInstance(prop, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(EnvProvider.getEnv("MAILTRAP_USERNAME"), EnvProvider.getEnv("MAILTRAP_PASSWORD"));
-            }
-        });
+        final MailtrapClient client = MailtrapClientFactory.createMailtrapClient(config);
+
+        final MailtrapMail mail = MailtrapMail.builder()
+                .from(new Address(EnvProvider.getEnv("MAIL_FROM"), EnvProvider.getEnv("PLATFORM_NAME")))
+                .to(List.of(new Address(to)))
+                .templateUuid("689c35ce-5a33-43c7-889d-1279ca0b56f8")
+                .templateVariables(Map.of(
+                        "company_info_name", EnvProvider.getEnv("PLATFORM_NAME"),
+                        "name", subjectName,
+                        "url", link
+                ))
+                .build();
+        try {
+            System.out.println(client.send(mail));
+        } catch (Exception e) {
+            System.out.println("Caught exception : " + e);
+        }
     }
 
-    public void sendEmail(String to, String from, String subject, String body) throws MessagingException {
-        Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(from));
-        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-        message.setSubject(subject);
+    static public void send2FACodeEmail(String to, String code) {
+        final MailtrapConfig config = new MailtrapConfig.Builder()
+                .sandbox(true)
+                .inboxId(3784628L)
+                .token(EnvProvider.getEnv("MAILTRAP_API_KEY_SANDBOX"))
+                .build();
 
-        MimeBodyPart mimeBodyPart = new MimeBodyPart();
-        mimeBodyPart.setContent(body, "text/html; charset=utf-8");
+        final MailtrapClient client = MailtrapClientFactory.createMailtrapClient(config);
 
-        Multipart multipart = new MimeMultipart();
-        multipart.addBodyPart(mimeBodyPart);
+        final MailtrapMail mail = MailtrapMail.builder()
+                .from(new Address(EnvProvider.getEnv("MAIL_FROM"), EnvProvider.getEnv("PLATFORM_NAME")))
+                .to(List.of(new Address(to)))
+                .templateUuid("cc8a52be-7e05-49cf-a42f-9601528c6b67")
+                .templateVariables(Map.of(
+                        "company_info_name", EnvProvider.getEnv("PLATFORM_NAME"),
+                        "code", code
+                ))
+                .build();
 
-        message.setContent(multipart);
-
-        Transport.send(message);
+        try {
+            System.out.println(client.send(mail));
+        } catch (Exception e) {
+            System.out.println("Caught exception : " + e);
+        }
     }
-
-
 
 }

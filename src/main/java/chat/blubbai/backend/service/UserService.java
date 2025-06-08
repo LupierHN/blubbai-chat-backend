@@ -2,11 +2,8 @@ package chat.blubbai.backend.service;
 
 // ...existing imports...
 
-import chat.blubbai.backend.model.PhoneNumber;
 import chat.blubbai.backend.model.User;
-import chat.blubbai.backend.model.enums.Method2FA;
 import chat.blubbai.backend.persistence.UserRepository;
-import org.jboss.aerogear.security.otp.Totp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,7 +50,7 @@ public class UserService {
      * @return User object or null if not found.
      */
     public User getUser(UUID uId) {
-        return this.userRepository.findByUId(uId);
+        return this.userRepository.findByUUID(uId);
     }
 
     /**
@@ -70,7 +67,7 @@ public class UserService {
      * @param loggedIn User object containing updated information.
      */
     public void updateUser(User loggedIn) {
-        User existingUser = getUser(loggedIn.getUId());
+        User existingUser = getUser(loggedIn.getUUID());
         if (existingUser != null) {
             existingUser.setUsername(loggedIn.getUsername());
             existingUser.setEmail(loggedIn.getEmail());
@@ -85,7 +82,7 @@ public class UserService {
      * @return true if the user was deleted successfully, false otherwise.
      */
     public boolean deleteUser(User user) {
-        User existingUser = getUser(user.getUId());
+        User existingUser = getUser(user.getUUID());
         if (existingUser != null) {
             userRepository.delete(existingUser);
             return true;
@@ -101,10 +98,15 @@ public class UserService {
      * @param password The new password to set.
      */
     public void updatePassword(User user, String password) {
-        User existingUser = getUser(user.getUId());
+        User existingUser = getUser(user.getUUID());
         if (existingUser != null) {
             existingUser.setPassword(passwordEncoder.encode(password));
             userRepository.save(existingUser);
         }
+    }
+
+    public void setMailVerified(User user) {
+        user.setMailVerified(true);
+        userRepository.save(user);
     }
 }

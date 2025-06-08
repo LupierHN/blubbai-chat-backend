@@ -7,7 +7,6 @@ import chat.blubbai.backend.persistence.UserRepository;
 import chat.blubbai.backend.utils.EnvProvider;
 import chat.blubbai.backend.utils.MailUtility;
 import chat.blubbai.backend.utils.TokenUtility;
-import jakarta.mail.MessagingException;
 import org.jboss.aerogear.security.otp.Totp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,7 +28,7 @@ public class AuthService {
      * @param user User object containing the new user's information.
      * @return User object if registration is successful, null if no phone number is provided.
      */
-    public User registerUser(User user) throws MessagingException {
+    public User registerUser(User user){
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getPhoneNumber() != null) {
             PhoneNumber phoneNumber = phoneNumberService.createPhoneNumber(user.getPhoneNumber());
@@ -65,11 +64,9 @@ public class AuthService {
      *
      * @param user
      */
-    public void sendMailAddressVerification(User user) throws MessagingException {
-        String link = EnvProvider.getEnv("FRONTEND_DOMAIN")+"/noa/2fa/verifyMail?token=" + TokenUtility.generateMailVerificationToken(user);
-        MailUtility mailUtility = new MailUtility();
-        mailUtility.sendEmail(user.getEmail(), "not-reply"+EnvProvider.getEnv("MAIL_FROM"), "BlubbAI - Verify your email address",
-                "Please click the following link to verify your email address: <a href=\"" + link + "\">Verify Email</a>");
+    public void sendMailAddressVerification(User user) {
+        String link = EnvProvider.getEnv("FRONTEND_DOMAIN")+"/noa/2fa/verifyMail?token=" + TokenUtility.generateMailVerificationToken(user).getToken();
+        MailUtility.sendEmailVerificationEmail(user.getEmail(), user.getUsername(), link);
     }
 
     /**
@@ -99,6 +96,19 @@ public class AuthService {
             String code = totp.now();
             System.out.println("2FA Code for user " + user.getUsername() + ": " + code);
             // Here you would send the code via the specified method (SMS, email, etc.)
+            switch (method) {
+                case SMS:
+                    // Implement SMS sending logic here
+                    System.out.println("Sending 2FA code via SMS to " + user.getPhoneNumber().getNumber());
+                    break;
+                case EMAIL:
+                    MailUtility.send2FACodeEmail(user.getEmail(), code);
+                    System.out.println("Sending 2FA code via email to " + user.getEmail());
+                    break;
+                default:
+                    System.out.println("Unknown method for sending 2FA code: " + method);
+                    break;
+            }
         } else {
             System.out.println("No secret found for user " + user.getUsername());
         }
@@ -121,7 +131,7 @@ public class AuthService {
      */
     public String generateAuthQRCodeURI(User user) {
         String secret = getSecret(user);
-        String name = user.getUsername()+"@BlubbAI";
+        String name = user.getEmail();
         Totp totp = new Totp(secret);
         return totp.uri(name)+"&issuer=BlubbAI";
     }

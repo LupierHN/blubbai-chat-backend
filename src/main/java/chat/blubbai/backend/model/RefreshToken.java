@@ -21,7 +21,7 @@ public class RefreshToken {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "uId", nullable = false, referencedColumnName = "uId")
+    @JoinColumn(name = "UUID", nullable = false, referencedColumnName = "UUID")
     private User user;
 
     @Column(nullable = false, unique = true, columnDefinition = "TEXT")

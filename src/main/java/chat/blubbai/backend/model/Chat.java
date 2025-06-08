@@ -29,7 +29,7 @@ public class Chat {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JsonIgnore
-    @JoinColumn(name = "uId", referencedColumnName = "uId")
+    @JoinColumn(name = "UUID", referencedColumnName = "UUID")
     private User user;
 
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

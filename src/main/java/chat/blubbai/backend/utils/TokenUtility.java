@@ -53,7 +53,7 @@ public class TokenUtility {
         return new AccessTokenDTO(Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "access")
-                .claim("uId", user.getUId())
+                .claim("uId", user.getUUID())
                 .claim("secretMethod", user.getSecretMethod())
                 .claim("2fa_completed", twoFactorCompleted)
                 .claim("mail_verified", user.isMailVerified())
@@ -70,7 +70,7 @@ public class TokenUtility {
         return new AccessTokenDTO(Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "mail_verification")
-                .claim("uId", user.getUId())
+                .claim("uId", user.getUUID())
                 .claim("mail_verified", true)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + 43200000)) // 12 hours
@@ -149,14 +149,8 @@ public class TokenUtility {
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody();
-            UUID uId = claims.get("uId", UUID.class);
-            if (uId == null) {
-                String username = claims.getSubject();
-                if (username == null) {
-                    return null;
-                }
-                return userService.getUserByUsername(username);
-            }
+            String uIdString = claims.get("uId", String.class);
+            UUID uId = UUID.fromString(uIdString);
             return userService.getUser(uId);
         } catch (JwtException e) {
             return null;
@@ -224,7 +218,7 @@ public class TokenUtility {
             if (claims.getSubject().equals(accessClaims.getSubject())) {
                 User user = new User();
                 user.setUsername(accessClaims.getSubject());
-                user.setUId(accessClaims.get("uId", UUID.class));
+                user.setUUID(accessClaims.get("uId", UUID.class));
                 //user.setRole(new Role(accessClaims.get("role", Integer.class)));
                 return generateAccessToken(user, true);
             } else {
@@ -317,6 +311,40 @@ public class TokenUtility {
         AccessTokenDTO token = getTokenFromHeader(authHeader);
         if (token == null) return false;
         return validateToken(token);
+    }
+
+
+    /**
+     * Retrieves the User from a Mail Verification Token
+     * If the token does not contain a uId, it will try to get the user by username.
+     * If the token is invalid or expired, it will return null.
+     *
+     * @param token
+     * @param userService
+     * @return
+     * @throws JwtException
+     */
+    public static User getUserFromMailToken(String token, UserService userService) throws JwtException {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            String uIdString = claims.get("uId", String.class);
+            UUID uId = UUID.fromString(uIdString);
+            if (uId == null) {
+                String username = claims.getSubject();
+                if (username == null) {
+                    return null;
+                }
+                return userService.getUserByUsername(username);
+            }
+            return userService.getUser(uId);
+        } catch (Exception e) {
+            System.out.println("Unbekannter Fehler beim Parsen des Tokens: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
