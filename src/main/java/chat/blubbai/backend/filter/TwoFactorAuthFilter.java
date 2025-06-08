@@ -51,17 +51,25 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
             AccessTokenDTO token = new AccessTokenDTO(authHeader.substring(7));
             if (TokenUtility.validateToken(token)) {
                 String secretMethod = TokenUtility.getSecretMethod(token);
+                Boolean isMailVerified = TokenUtility.getMailVerified(token);
                 boolean is2FACompleted = Boolean.TRUE.equals(TokenUtility.get2FACompleted(token));
-                if (secretMethod == null && !is2FACompleted) {
+                if (!isMailVerified) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"error_code\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getValue() + "\", \"message\": \""+ ErrorResponse.TWO_FACTOR_REQUIRED.getMessage() + "\"} }");
+                    response.getWriter().write("{\"error_code\": \"" + ErrorResponse.MAIL_NOT_VERIFIED.getValue() + "\", \"message\": \"" + ErrorResponse.MAIL_NOT_VERIFIED.getMessage() + "\"}");
                     return;
-                }else if (secretMethod == null) {
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error_code\": \"" + ErrorResponse.METHOD_NOT_SET.getValue() + "\", \"message\": \"" + ErrorResponse.METHOD_NOT_SET.getMessage() + "\"}");
-                    return;
+                }else {
+                    if (secretMethod == null && !is2FACompleted) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error_code\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getValue() + "\", \"message\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getMessage() + "\"} }");
+                        return;
+                    } else if (secretMethod == null) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error_code\": \"" + ErrorResponse.METHOD_NOT_SET.getValue() + "\", \"message\": \"" + ErrorResponse.METHOD_NOT_SET.getMessage() + "\"}");
+                        return;
+                    }
                 }
             }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

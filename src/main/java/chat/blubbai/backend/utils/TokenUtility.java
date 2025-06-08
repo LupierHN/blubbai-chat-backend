@@ -1,6 +1,7 @@
 package chat.blubbai.backend.utils;
 
 import chat.blubbai.backend.model.AccessTokenDTO;
+import chat.blubbai.backend.model.RefreshToken;
 import chat.blubbai.backend.model.User;
 import chat.blubbai.backend.service.UserService;
 import io.jsonwebtoken.*;
@@ -20,16 +21,24 @@ public class TokenUtility {
      * @param user User
      * @return refreshToken Token with expiration 14 days
      */
-    public static AccessTokenDTO generateRefreshToken(User user) {
+    public static RefreshToken generateRefreshToken(User user) {
         Date now = new Date();
         Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
-        return new AccessTokenDTO(Jwts.builder()
+        return new RefreshToken(
+                null, // ID will be generated in prePersist
+                user,
+                Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("tokenType", "refresh")
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + 1209600000))
                 .signWith(key, SignatureAlgorithm.HS512)
-                .compact());
+                .compact(),
+                now.toInstant().plusMillis(1209600000), // 14 days
+                null,
+                false
+        );
+
     }
 
     /**
@@ -47,6 +56,7 @@ public class TokenUtility {
                 .claim("uId", user.getUId())
                 .claim("secretMethod", user.getSecretMethod())
                 .claim("2fa_completed", twoFactorCompleted)
+                .claim("mail_verified", user.isMailVerified())
                 //.claim("role", user.getRole().getRId())
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + 600000))
@@ -54,8 +64,22 @@ public class TokenUtility {
                 .compact());
     }
 
+    public static AccessTokenDTO generateMailVerificationToken(User user) {
+        Date now = new Date();
+        Key key = Keys.hmacShaKeyFor(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8));
+        return new AccessTokenDTO(Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("tokenType", "mail_verification")
+                .claim("uId", user.getUId())
+                .claim("mail_verified", true)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + 43200000)) // 12 hours
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact());
+    }
+
     /**
-     * Returns the Expiration Date of the Token
+     * Returns the Expiration Date of the AccessToken
      *
      * @param token Token
      * @return expirationDate
@@ -125,7 +149,7 @@ public class TokenUtility {
                     .build()
                     .parseClaimsJws(token.getToken())
                     .getBody();
-            Integer uId = claims.get("uId", Integer.class);
+            UUID uId = claims.get("uId", UUID.class);
             if (uId == null) {
                 String username = claims.getSubject();
                 if (username == null) {
@@ -251,6 +275,19 @@ public class TokenUtility {
                     .parseClaimsJws(token.getToken())
                     .getBody()
                     .get("2fa_completed", Boolean.class);
+        } catch (JwtException e) {
+            return null;
+        }
+    }
+
+    public static Boolean getMailVerified(AccessTokenDTO token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(EnvProvider.getEnv("JWT_SECRET").getBytes(StandardCharsets.UTF_8))
+                    .build()
+                    .parseClaimsJws(token.getToken())
+                    .getBody()
+                    .get("mail_verified", Boolean.class);
         } catch (JwtException e) {
             return null;
         }

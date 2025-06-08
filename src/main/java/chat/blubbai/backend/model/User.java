@@ -45,6 +45,10 @@ public class User {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @JsonIgnore
+    @Column(nullable = false)
+    private boolean mailVerified = false;
+
     @ManyToOne
     @JoinColumn(name = "rId", referencedColumnName = "rId")
     private Role role;
@@ -64,6 +68,7 @@ public class User {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         this.secret = Base32.random();
+        this.mailVerified = false;
     }
 
     @PreUpdate

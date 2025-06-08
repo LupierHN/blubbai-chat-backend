@@ -4,6 +4,10 @@ import chat.blubbai.backend.model.PhoneNumber;
 import chat.blubbai.backend.model.User;
 import chat.blubbai.backend.model.enums.Method2FA;
 import chat.blubbai.backend.persistence.UserRepository;
+import chat.blubbai.backend.utils.EnvProvider;
+import chat.blubbai.backend.utils.MailUtility;
+import chat.blubbai.backend.utils.TokenUtility;
+import jakarta.mail.MessagingException;
 import org.jboss.aerogear.security.otp.Totp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,7 +29,7 @@ public class AuthService {
      * @param user User object containing the new user's information.
      * @return User object if registration is successful, null if no phone number is provided.
      */
-    public User registerUser(User user)  {
+    public User registerUser(User user) throws MessagingException {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getPhoneNumber() != null) {
             PhoneNumber phoneNumber = phoneNumberService.createPhoneNumber(user.getPhoneNumber());
@@ -35,7 +39,9 @@ public class AuthService {
         } else {
             return null;
         }
-        return userRepository.save(user);
+        User newUser = userRepository.save(user);
+        this.sendMailAddressVerification(newUser);
+        return newUser;
     }
 
     /**
@@ -53,6 +59,18 @@ public class AuthService {
     }
 
     // -------------------- Two-Factor Authentication (2FA) --------------------
+
+    /**
+     * Send a mail to the user with a verification link.
+     *
+     * @param user
+     */
+    public void sendMailAddressVerification(User user) throws MessagingException {
+        String link = EnvProvider.getEnv("FRONTEND_DOMAIN")+"/noa/2fa/verifyMail?token=" + TokenUtility.generateMailVerificationToken(user);
+        MailUtility mailUtility = new MailUtility();
+        mailUtility.sendEmail(user.getEmail(), "not-reply"+EnvProvider.getEnv("MAIL_FROM"), "BlubbAI - Verify your email address",
+                "Please click the following link to verify your email address: <a href=\"" + link + "\">Verify Email</a>");
+    }
 
     /**
      * Verify the 2FA code for a user.

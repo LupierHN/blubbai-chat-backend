@@ -10,6 +10,7 @@ import chat.blubbai.backend.service.AuthService;
 import chat.blubbai.backend.service.UserService;
 import chat.blubbai.backend.utils.ExternalApi;
 import chat.blubbai.backend.utils.TokenUtility;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Controller
 @AllArgsConstructor
@@ -45,11 +47,17 @@ public class AuthController {
      */
     @PostMapping("/noa/register")
     public ResponseEntity<?> register(@Valid @RequestBody final User user) {
+        User created;
         try {
             if (userService.getUserByUsername(user.getUsername()) != null) return new ResponseEntity<>(ErrorResponse.BAD_USERNAME,HttpStatus.CONFLICT); //Check if username already exists
             if (!ExternalApi.validateMail(user.getEmail())) return new ResponseEntity<>(ErrorResponse.BAD_EMAIL,HttpStatus.BAD_REQUEST); //Check if email is valid
             if (!ExternalApi.validatePhone(user.getPhoneNumber())) return new ResponseEntity<>(ErrorResponse.BAD_PHONE,HttpStatus.BAD_REQUEST); //Check if phone number is valid
-            final User created = authService.registerUser(user); //Register the user and store in the database
+            try {
+                created = authService.registerUser(user); //Register the user and store in the database and send verification email
+            }
+            catch (MessagingException e) {
+                return new ResponseEntity<>(ErrorResponse.BAD_EMAIL,HttpStatus.BAD_REQUEST); //If email sending fails, return 400 Bad Request
+            }
             return new ResponseEntity<>(TokenUtility.generateAccessToken(created, false), HttpStatus.CREATED); //Generate access token for the user and return it with 201 Created status
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -71,13 +79,11 @@ public class AuthController {
      */
     @PostMapping("/noa/login")
     public ResponseEntity<?> login(@Valid @RequestBody final User user) {
-        List<AccessTokenDTO> tokens = new ArrayList<>();
         try {
             if (userService.getUserByUsername(user.getUsername()) == null) return new ResponseEntity<>(ErrorResponse.BAD_USERNAME,HttpStatus.UNAUTHORIZED);
             if (!authService.validatePassword(user.getUsername(), user.getPassword())) return new ResponseEntity<>(ErrorResponse.INVALID_PASSWORD,HttpStatus.UNAUTHORIZED);
             final User loggedIn = userService.getUserByUsername(user.getUsername());
-            tokens.add(TokenUtility.generateAccessToken(loggedIn, false));
-            tokens.add(TokenUtility.generateRefreshToken(loggedIn));
+            TokenPairDTO tokens = new TokenPairDTO(TokenUtility.generateAccessToken(loggedIn, false),TokenUtility.generateRefreshToken(loggedIn));
             return new ResponseEntity<>(tokens, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -201,4 +207,16 @@ public class AuthController {
         if (newToken == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return new ResponseEntity<>(newToken, HttpStatus.OK);
     }
+
+    @PatchMapping("/noa/2fa/verifyMail")
+    public ResponseEntity<?> verifyMail(@RequestParam(value = "uuid", required = true) String uuid) {
+        if (uuid == null || uuid.isEmpty()) return new ResponseEntity<>(ErrorResponse.BAD_USERNAME,HttpStatus.BAD_REQUEST); // If the UUID is null or empty, return 400 Bad Request
+        User user = userService.getUserByUUID(uuid);
+        if (user == null) return new ResponseEntity<>(ErrorResponse.USER_NOT_FOUND,HttpStatus.NOT_FOUND);
+        if (user.isMailVerified()) return new ResponseEntity<>(HttpStatus.OK); // If the user is already verified, return 200 OK
+        user.setMailVerified(true); // Set the user's mail as verified
+        userService.saveUser(user); // Save the user to the database
+        return new ResponseEntity<>(HttpStatus.OK); // Return 200 OK status
+    }
+
 }

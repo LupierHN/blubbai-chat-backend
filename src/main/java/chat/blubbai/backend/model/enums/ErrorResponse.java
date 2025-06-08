@@ -10,16 +10,17 @@ import lombok.Getter;
  */
 @Getter
 public enum ErrorResponse {
-    USER_NOT_FOUND(1001,"User not found."),
-    BAD_EMAIL(1002,"Invalid E-mail address."),
-    USERNAME_CONFLICT(1003,"User already exists."),
-    BAD_PHONE(1004,"Invalid phone number."),
-    BAD_USERNAME(1005,"Invalid username."),
-    METHOD_NOT_SET(4001,"2FA Method not set."),
-    INVALID_PASSWORD(4002,"Invalid password."),
-    INVALID_2FA(4003,"2FA Code wrong or expired."),
-    TOKEN_EXPIRED(4004,"Token expired."),
-    TWO_FACTOR_REQUIRED(4005,"Two-factor authentication required.");
+    USER_NOT_FOUND(1001,"User not found"),
+    BAD_EMAIL(1002,"Invalid E-mail address"),
+    USERNAME_CONFLICT(1003,"User already exists"),
+    BAD_PHONE(1004,"Invalid phone number"),
+    BAD_USERNAME(1005,"Invalid username"),
+    METHOD_NOT_SET(4001,"2FA Method not set"),
+    INVALID_PASSWORD(4002,"Invalid password"),
+    INVALID_2FA(4003,"2FA Code wrong or expired"),
+    TOKEN_EXPIRED(4004,"Token expired"),
+    TWO_FACTOR_REQUIRED(4005,"2FA required"),
+    MAIL_NOT_VERIFIED(4006,"E-mail not verified");
 
     private final String message;
     private final int value;
