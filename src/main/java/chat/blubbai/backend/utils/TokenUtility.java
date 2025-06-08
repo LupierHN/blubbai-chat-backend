@@ -321,7 +321,7 @@ public class TokenUtility {
      *
      * @param token
      * @param userService
-     * @return
+     * @return User or null if the token is invalid or expired
      * @throws JwtException
      */
     public static User getUserFromMailToken(String token, UserService userService) throws JwtException {
@@ -332,15 +332,16 @@ public class TokenUtility {
                     .parseClaimsJws(token)
                     .getBody();
             String uIdString = claims.get("uId", String.class);
-            UUID uId = UUID.fromString(uIdString);
-            if (uId == null) {
+            if (uIdString != null) {
+                UUID uId = UUID.fromString(uIdString);
+                return userService.getUser(uId);
+            } else {
                 String username = claims.getSubject();
                 if (username == null) {
                     return null;
                 }
                 return userService.getUserByUsername(username);
             }
-            return userService.getUser(uId);
         } catch (Exception e) {
             System.out.println("Unbekannter Fehler beim Parsen des Tokens: " + e.getMessage());
             return null;

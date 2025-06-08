@@ -62,7 +62,7 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
                     if (secretMethod == null && !is2FACompleted) {
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                         response.setContentType("application/json");
-                        response.getWriter().write("{\"error_code\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getValue() + "\", \"message\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getMessage() + "\"} }");
+                        response.getWriter().write("{\"error_code\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getValue() + "\", \"message\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getMessage() + "\"}");
                         return;
                     } else if (secretMethod == null) {
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -71,8 +71,13 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
                         return;
                     }
                 }
+                // conditions satisfied, continue filter chain
+                filterChain.doFilter(request, response);
+                return;
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
         filterChain.doFilter(request, response);
     }

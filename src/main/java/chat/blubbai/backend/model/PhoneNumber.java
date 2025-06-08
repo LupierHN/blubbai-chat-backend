@@ -1,6 +1,6 @@
 package chat.blubbai.backend.model;
 
-import chat.blubbai.backend.utils.PhoneUtil;
+import chat.blubbai.backend.utils.PhoneUtility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ public class PhoneNumber {
     @JsonIgnore
     @Transient
     public String getFullNumber() {
-        return "+" + PhoneUtil.getCountryCodeNumber(country) + number;
+        return "+" + PhoneUtility.getCountryCodeNumber(country) + number;
     }
 
    }

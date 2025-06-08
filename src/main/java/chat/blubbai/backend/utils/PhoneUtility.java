@@ -2,7 +2,7 @@ package chat.blubbai.backend.utils;
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
-public class PhoneUtil {
+public class PhoneUtility {
 
     /**
      * Returns the country code number for a given country ISO2 Code.
