@@ -2,7 +2,7 @@ package chat.blubbai.backend.web;
 
 // ...existing imports...
 
-import chat.blubbai.backend.model.Token;
+import chat.blubbai.backend.model.AccessTokenDTO;
 import chat.blubbai.backend.utils.TokenUtility;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -69,7 +69,7 @@ public class ToolsController {
      * <b>Response:</b> 200 OK with a Token object.
      */
     @GetMapping("/token")
-    public ResponseEntity<Token> getToken() {
+    public ResponseEntity<AccessTokenDTO> getToken() {
         return new ResponseEntity<>(TokenUtility.createTestToken(), HttpStatus.OK);
     }
 

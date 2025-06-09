@@ -1,6 +1,6 @@
 package chat.blubbai.backend.filter;
 
-import chat.blubbai.backend.model.Token;
+import chat.blubbai.backend.model.AccessTokenDTO;
 import chat.blubbai.backend.utils.TokenUtility;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,7 +47,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            Token jwt = new Token(authHeader.substring(7));
+            AccessTokenDTO jwt = new AccessTokenDTO(authHeader.substring(7));
             if (TokenUtility.validateToken(jwt)) {
                 if (Objects.requireNonNull(TokenUtility.getTokenType(jwt)).equals("access")) {
                     String username = TokenUtility.getSubject(jwt);

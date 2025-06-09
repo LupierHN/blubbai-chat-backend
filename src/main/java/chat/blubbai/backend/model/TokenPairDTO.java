@@ -9,6 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Token {
-    private String token;
+public class TokenPairDTO {
+    AccessTokenDTO accessToken;
+    RefreshToken refreshToken;
 }

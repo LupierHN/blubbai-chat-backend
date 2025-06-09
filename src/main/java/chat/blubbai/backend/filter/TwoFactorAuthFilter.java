@@ -1,6 +1,7 @@
 package chat.blubbai.backend.filter;
 
-import chat.blubbai.backend.model.Token;
+import chat.blubbai.backend.model.AccessTokenDTO;
+import chat.blubbai.backend.model.enums.ErrorResponse;
 import chat.blubbai.backend.utils.TokenUtility;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,23 +48,36 @@ public class TwoFactorAuthFilter extends OncePerRequestFilter {
         }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            Token token = new Token(authHeader.substring(7));
+            AccessTokenDTO token = new AccessTokenDTO(authHeader.substring(7));
             if (TokenUtility.validateToken(token)) {
                 String secretMethod = TokenUtility.getSecretMethod(token);
+                Boolean isMailVerified = TokenUtility.getMailVerified(token);
                 boolean is2FACompleted = Boolean.TRUE.equals(TokenUtility.get2FACompleted(token));
-                if (secretMethod == null && !is2FACompleted) {
+                if (Boolean.FALSE.equals(isMailVerified)) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"2fa_required\": true, \"message\": \"2FA verification required\"}");
+                    response.getWriter().write("{\"error_code\": \"" + ErrorResponse.MAIL_NOT_VERIFIED.getValue() + "\", \"message\": \"" + ErrorResponse.MAIL_NOT_VERIFIED.getMessage() + "\"}");
                     return;
-                }else if (secretMethod == null) {
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"2fa_method\": null, \"message\": \"2FA Method not set\"}");
-                    return;
+                }else {
+                    if (secretMethod == null && !is2FACompleted) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error_code\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getValue() + "\", \"message\": \"" + ErrorResponse.TWO_FACTOR_REQUIRED.getMessage() + "\"}");
+                        return;
+                    } else if (secretMethod == null) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error_code\": \"" + ErrorResponse.METHOD_NOT_SET.getValue() + "\", \"message\": \"" + ErrorResponse.METHOD_NOT_SET.getMessage() + "\"}");
+                        return;
+                    }
                 }
+                // conditions satisfied, continue filter chain
+                filterChain.doFilter(request, response);
+                return;
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
         filterChain.doFilter(request, response);
     }
