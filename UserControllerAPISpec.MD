@@ -1,172 +1,288 @@
 # UserController API Specification
 
-## `GET /api/v1/user`
-**Beschreibung:** Gibt das Profil des aktuell authentifizierten Nutzers zurück.
-
-- **Header:**  
-  - `Authorization`: JWT-Token
-
-- **Antworten:**  
-  - `200 OK`: User-Objekt  
-  - `401 UNAUTHORIZED`: Kein oder ungültiger Token  
-  - `500 INTERNAL_SERVER_ERROR`:  
-    ```json
-    { "code": 1005, "message": "User not found" }
-    ```
+This document describes the REST API endpoints for user management.  
+All endpoints return JSON responses.  
+Unless otherwise noted, all error responses are JSON objects with `code` and `message` fields.
 
 ---
 
-## `POST /api/v1/user/register`
-**Beschreibung:** Registriert einen neuen Nutzer.
+## `GET /api/v1/user`
+**Description:**  
+Returns the profile of the currently authenticated user.
 
-- **Body:**  
-  - User-Objekt (`username`, `email`, `phoneNumber`, `password`, ...)
+- **Headers:**  
+  - `Authorization`: JWT token (required)
 
-- **Antworten:**  
-  - `201 CREATED`: Liste von Token-Objekten  
-  - `400 BAD_REQUEST`:  
-    - Ungültige E-Mail:  
+- **Filter Responses:**  
+  - `401 UNAUTHORIZED`:  
+    - If the JWT is missing, invalid, or the user does not exist:  
+      ```json
+      { "code": 401, "message": "Invalid or missing JWT token" }
+      ```
+      or  
+      ```json
+      { "code": 401, "message": "User not found" }
+      ```
+  - `403 FORBIDDEN`:  
+    - If 2FA is required but not completed:  
+      ```json
+      { "2fa_required": true, "message": "2FA verification required" }
+      ```
+  - `400 BAD REQUEST`:  
+    - If the 2FA method is not set:  
+      ```json
+      { "2fa_method": null, "message": "2FA Method not set" }
+      ```
+
+- **Controller Responses:**  
+  - `200 OK`:  
+    - Returns the user object if the token is valid and the user exists.
+  - `404 NOT FOUND`:  
+    - Returned if the user does not exist.
+  - `500 INTERNAL_SERVER_ERROR`:  
+    - Returned for unexpected server errors.
+
+---
+
+## `POST /api/v1/user/noa/register`
+**Description:**  
+Registers a new user.
+
+- **Request Body:**  
+  - User object (must include `username`, `email`, `phoneNumber`, `password`)
+
+- **Responses:**  
+  - `201 CREATED`:  
+    - Returns a list of token objects if registration is successful.
+  - `400 BAD REQUEST`:  
+    - If the email is invalid:  
       ```json
       { "code": 1002, "message": "Invalid E-Mail" }
       ```
-    - Ungültige Telefonnummer:  
+    - If the phone number is invalid:  
       ```json
       { "code": 1004, "message": "Invalid Phone" }
       ```
-  - `409 CONFLICT`: Nutzername existiert bereits  
-  - `500 INTERNAL_SERVER_ERROR`: Allgemeiner Fehler
+  - `409 CONFLICT`:  
+    - If the username already exists.
+  - `500 INTERNAL_SERVER_ERROR`:  
+    - For any other server error.
 
 ---
 
-## `POST /api/v1/user/login`
-**Beschreibung:** Authentifiziert einen Nutzer.
+## `POST /api/v1/user/noa/login`
+**Description:**  
+Authenticates a user.
 
-- **Body:**  
-  - User-Objekt (`username`, `password`)
+- **Request Body:**  
+  - User object (must include `username`, `password`)
 
-- **Antworten:**  
-  - `200 OK`: Liste von Token-Objekten  
+- **Responses:**  
+  - `200 OK`:  
+    - Returns a list of token objects if login is successful.
   - `401 UNAUTHORIZED`:  
-    - Nutzer nicht gefunden:  
+    - If the user is not found:  
       ```json
       { "code": 4004, "message": "User not found" }
       ```
-    - Falsches Passwort:  
+    - If the password is incorrect:  
       ```json
       { "code": 4002, "message": "Wrong Password" }
       ```
-  - `500 INTERNAL_SERVER_ERROR`: Allgemeiner Fehler
+  - `500 INTERNAL_SERVER_ERROR`:  
+    - For any other server error.
 
 ---
 
 ## `PUT /api/v1/user/update`
-**Beschreibung:** Aktualisiert das Nutzerprofil.
+**Description:**  
+Updates the profile of the authenticated user.
 
-- **Header:**  
-  - `Authorization`: JWT-Token
+- **Headers:**  
+  - `Authorization`: JWT token (required)
 
-- **Body:**  
-  - User-Objekt (aktualisierte Daten)
+- **Filter Responses:**  
+  - `401 UNAUTHORIZED`:  
+    - If the JWT is missing, invalid, or the user does not exist:  
+      ```json
+      { "code": 401, "message": "Invalid or missing JWT token" }
+      ```
+      or  
+      ```json
+      { "code": 401, "message": "User not found" }
+      ```
+  - `403 FORBIDDEN`:  
+    - If 2FA is required but not completed:  
+      ```json
+      { "2fa_required": true, "message": "2FA verification required" }
+      ```
+  - `400 BAD REQUEST`:  
+    - If the 2FA method is not set:  
+      ```json
+      { "2fa_method": null, "message": "2FA Method not set" }
+      ```
 
-- **Query:**  
-  - `oldPassword`: String
-
-- **Antworten:**  
-  - `200 OK`: Aktualisiertes User-Objekt  
-  - `400 BAD_REQUEST`:  
-    - Ungültige E-Mail:  
+- **Controller Responses:**  
+  - `200 OK`:  
+    - Returns the updated user object if successful.
+  - `400 BAD REQUEST`:  
+    - If the email is invalid:  
       ```json
       { "code": 1002, "message": "Invalid E-Mail" }
       ```
-    - Ungültige Telefonnummer:  
+    - If the phone number is invalid:  
       ```json
       { "code": 1004, "message": "Invalid Phone" }
       ```
   - `401 UNAUTHORIZED`:  
-    - Falsches Passwort:  
+    - If the old password is incorrect:  
       ```json
       { "code": 4002, "message": "Wrong Password" }
       ```
-  - `500 INTERNAL_SERVER_ERROR`: Allgemeiner Fehler
+  - `500 INTERNAL_SERVER_ERROR`:  
+    - For any other server error.
 
 ---
 
 ## `DELETE /api/v1/user/delete`
-**Beschreibung:** Löscht den aktuell authentifizierten Nutzer.
+**Description:**  
+Deletes the currently authenticated user.
 
-- **Header:**  
-  - `Authorization`: JWT-Token
+- **Headers:**  
+  - `Authorization`: JWT token (required)
 
-- **Antworten:**  
-  - `204 NO CONTENT`: Erfolgreich gelöscht  
-  - `404 NOT FOUND`: Nutzer nicht gefunden
-
----
-
-## `GET /api/v1/user/2fa`
-**Beschreibung:** Initialisiert oder verwaltet 2FA für den Nutzer.
-
-- **Header:**  
-  - `Authorization`: JWT-Token
-
-- **Query:**  
-  - `method`: (optional, z.B. `"2fa"`)
-
-- **Antworten:**  
-  - `200 OK`: QR-Code-String (bei TOTP) oder leer  
-  - `401 UNAUTHORIZED`: Kein oder ungültiger Token  
-  - `500 INTERNAL_SERVER_ERROR`:  
-    ```json
-    { "code": 1005, "message": "User not found" }
-    ```
-
----
-
-## `POST /api/v1/user/2fa`
-**Beschreibung:** Überprüft den 2FA-Code.
-
-- **Header:**  
-  - `Authorization`: JWT-Token
-
-- **Query:**  
-  - `code`: 2FA-Code
-
-- **Antworten:**  
-  - `200 OK`: Erfolgreich  
+- **Filter Responses:**  
   - `401 UNAUTHORIZED`:  
-    - Kein 2FA aktiviert oder falscher Code  
+    - If the JWT is missing, invalid, or the user does not exist:  
+      ```json
+      { "code": 401, "message": "Invalid or missing JWT token" }
+      ```
+      or  
+      ```json
+      { "code": 401, "message": "User not found" }
+      ```
+  - `403 FORBIDDEN`:  
+    - If 2FA is required but not completed:  
+      ```json
+      { "2fa_required": true, "message": "2FA verification required" }
+      ```
+  - `400 BAD REQUEST`:  
+    - If the 2FA method is not set:  
+      ```json
+      { "2fa_method": null, "message": "2FA Method not set" }
+      ```
+
+- **Controller Responses:**  
+  - `204 NO CONTENT`:  
+    - If the user was successfully deleted.
+  - `404 NOT FOUND`:  
+    - If the user was not found.
+
+---
+
+## `GET /api/v1/user/no2fa/2fa`
+**Description:**  
+Initializes or manages two-factor authentication (2FA) for the authenticated user.
+
+- **Headers:**  
+  - `Authorization`: JWT token (required)
+
+- **Filter Responses:**  
+  - `401 UNAUTHORIZED`:  
+    - If the JWT is missing, invalid, or the user does not exist:  
+      ```json
+      { "code": 401, "message": "Invalid or missing JWT token" }
+      ```
+      or  
+      ```json
+      { "code": 401, "message": "User not found" }
+      ```
+
+- **Controller Responses:**  
+  - `200 OK`:  
+    - Returns a QR code string for TOTP setup if method is `"2fa"` and user has no secret method yet.
+    - Returns empty body if 2FA is already set up or another method is used.
+  - `400 BAD REQUEST`:  
+    - If the method is missing and the user has no secret method.
+  - `404 NOT FOUND`:  
+    - If the user does not exist.
   - `500 INTERNAL_SERVER_ERROR`:  
-    ```json
-    { "code": 1005, "message": "User not found" }
-    ```
+    - For any other server error.
 
 ---
 
-## `POST /api/v1/user/validateToken`
-**Beschreibung:** Prüft, ob ein übergebener Token gültig ist.
+## `POST /api/v1/user/no2fa/2fa`
+**Description:**  
+Verifies the submitted 2FA code for the authenticated user.
 
-- **Body:**  
-  - Token-Objekt
+- **Headers:**  
+  - `Authorization`: JWT token (required)
 
-- **Antworten:**  
-  - `200 OK`: Boolean (`true` = gültig, `false` = ungültig)
+- **Filter Responses:**  
+  - `401 UNAUTHORIZED`:  
+    - If the JWT is missing, invalid, or the user does not exist:  
+      ```json
+      { "code": 401, "message": "Invalid or missing JWT token" }
+      ```
+      or  
+      ```json
+      { "code": 401, "message": "User not found" }
+      ```
+
+- **Controller Responses:**  
+  - `200 OK`:  
+    - If the code is valid, returns a new access token.
+  - `401 UNAUTHORIZED`:  
+    - If 2FA is not enabled or the code is invalid.
+  - `404 NOT FOUND`:  
+    - If the user does not exist.
+  - `500 INTERNAL_SERVER_ERROR`:  
+    - For any other server error.
 
 ---
 
-## `POST /api/v1/user/renewToken`
-**Beschreibung:** Erneuert einen Token, sofern gültig.
+## `POST /api/v1/user/noa/validateToken`
+**Description:**  
+Checks if a given token is valid.
 
-- **Header:**  
-  - `Authorization`: JWT-Token
+- **Request Body:**  
+  - Token object
 
-- **Body:**  
-  - Token-Objekt
-
-- **Antworten:**  
-  - `200 OK`: Neuer Token  
-  - `401 UNAUTHORIZED`: Token ungültig oder Nutzer nicht gefunden
+- **Responses:**  
+  - `200 OK`:  
+    - Returns a boolean (`true` if valid, `false` if invalid).
 
 ---
 
-**Hinweis:**  
-Alle Fehlerantworten sind als JSON-Objekte mit `code` und `message` aufgebaut, sofern nicht anders angegeben.
+## `POST /api/v1/user/noa/renewToken`
+**Description:**  
+Renews a token if it is valid.
+
+- **Headers:**  
+  - `Authorization`: JWT token (required)
+
+- **Filter Responses:**  
+  - `401 UNAUTHORIZED`:  
+    - If the JWT is missing, invalid, or the user does not exist:  
+      ```json
+      { "code": 401, "message": "Invalid or missing JWT token" }
+      ```
+      or  
+      ```json
+      { "code": 401, "message": "User not found" }
+      ```
+
+- **Controller Responses:**  
+  - `200 OK`:  
+    - Returns a new token if renewal is successful.
+  - `401 UNAUTHORIZED`:  
+    - If the token is invalid or the user is not found.
+
+---
+
+**Notes:**  
+- All error responses (unless otherwise specified) are JSON objects with `code` and `message`.
+- All endpoints require valid JWT tokens in the `Authorization` header unless marked as "noa" (no authentication).
+- For 2FA endpoints, if the user does not have a secret method set and no method is provided, a `400 BAD REQUEST` is returned.
+- Filter responses (authentication/authorization errors) always take precedence and are returned before controller logic is executed.
+
